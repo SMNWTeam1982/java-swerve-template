@@ -38,7 +38,7 @@ public class SwerveModule extends SubsystemBase {
      * @param encoderID    CAN ID of the module's absolute encoder
      */
     public SwerveModule(int driveMotorID, int turnMotorID, int encoderID) {
-        this.driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless);
+        this.driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless); // in java you only need to use the this keyword if the parameter name and the property name are the same
         this.turnMotor = new SparkMax(turnMotorID, MotorType.kBrushless);
 
         this.turnEncoder = new CANcoder(encoderID);
