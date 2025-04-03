@@ -47,16 +47,19 @@ public class SwerveModule extends SubsystemBase {
         this.drivePIDController = new PIDController(
                 SwerveModuleConstants.DRIVE_PROPORTIONAL_GAIN,
                 SwerveModuleConstants.DRIVE_INTEGRAL_GAIN,
-                SwerveModuleConstants.DRIVE_DERIVATIVE_GAIN);
+                SwerveModuleConstants.DRIVE_DERIVATIVE_GAIN
+        );
 
         this.turnPIDController = new PIDController(
                 SwerveModuleConstants.TURN_PROPORTIONAL_GAIN,
                 SwerveModuleConstants.TURN_INTEGRAL_GAIN,
-                SwerveModuleConstants.TURN_DERIVATIVE_GAIN);
+                SwerveModuleConstants.TURN_DERIVATIVE_GAIN
+        );
 
         this.driveFeedforward = new SimpleMotorFeedforward(
                 SwerveModuleConstants.DRIVE_STATIC_GAIN_VOLTS,
-                SwerveModuleConstants.DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER);
+                SwerveModuleConstants.DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER
+        );
 
         this.turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
     }
@@ -67,7 +70,8 @@ public class SwerveModule extends SubsystemBase {
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(
                 driveEncoder.getPosition() * SwerveModuleConstants.POSITION_TO_METERS_TRAVELED_MULTIPLIER,
-                Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
+                Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble())
+        );
     }
 
     /**
@@ -84,7 +88,8 @@ public class SwerveModule extends SubsystemBase {
 
         double drivePidOutput = drivePIDController.calculate(
                 driveEncoder.getVelocity() * SwerveModuleConstants.RPM_TO_METERS_PER_SECOND_CONVERSION_MULTIPLIER,
-                desiredState.speedMetersPerSecond);
+                desiredState.speedMetersPerSecond
+        );
 
         double driveOutput = drivePidOutput + driveFeedforward.calculate(desiredState.speedMetersPerSecond);
 
@@ -97,7 +102,8 @@ public class SwerveModule extends SubsystemBase {
 
         double turnOutput = turnPIDController.calculate(
                 encoderRotation.getRadians(),
-                desiredState.angle.getRadians());
+                desiredState.angle.getRadians()
+        );
 
         if (turnOutput > 1.0) {
             turnOutput = 1.0;
