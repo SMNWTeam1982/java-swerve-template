@@ -49,7 +49,9 @@ public class RobotContainer {
           driverController.getLeftY() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
           driverController.getRightX() * 3,
           false
-        ), driveTrain)
+        ),
+        driveTrain
+      )
     );
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
