@@ -38,30 +38,30 @@ public class SwerveModule extends SubsystemBase {
      * @param encoderID    CAN ID of the module's absolute encoder
      */
     public SwerveModule(int driveMotorID, int turnMotorID, int encoderID) {
-        this.driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless); // in java you only need to use the this keyword if the parameter name and the property name are the same
-        this.turnMotor = new SparkMax(turnMotorID, MotorType.kBrushless);
+        driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless);
+        turnMotor = new SparkMax(turnMotorID, MotorType.kBrushless);
 
-        this.turnEncoder = new CANcoder(encoderID);
-        this.driveEncoder = driveMotor.getEncoder();
+        turnEncoder = new CANcoder(encoderID);
+        driveEncoder = driveMotor.getEncoder();
 
-        this.drivePIDController = new PIDController(
+        drivePIDController = new PIDController(
                 SwerveModuleConstants.DRIVE_PROPORTIONAL_GAIN,
                 SwerveModuleConstants.DRIVE_INTEGRAL_GAIN,
                 SwerveModuleConstants.DRIVE_DERIVATIVE_GAIN
         );
 
-        this.turnPIDController = new PIDController(
+        turnPIDController = new PIDController(
                 SwerveModuleConstants.TURN_PROPORTIONAL_GAIN,
                 SwerveModuleConstants.TURN_INTEGRAL_GAIN,
                 SwerveModuleConstants.TURN_DERIVATIVE_GAIN
         );
 
-        this.driveFeedforward = new SimpleMotorFeedforward(
+        driveFeedforward = new SimpleMotorFeedforward(
                 SwerveModuleConstants.DRIVE_STATIC_GAIN_VOLTS,
                 SwerveModuleConstants.DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER
         );
 
-        this.turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
+        turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
     }
 
     /**

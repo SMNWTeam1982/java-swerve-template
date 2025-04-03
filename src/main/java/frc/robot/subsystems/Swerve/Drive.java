@@ -7,6 +7,7 @@ package frc.robot.subsystems.Swerve;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
@@ -106,10 +107,10 @@ public class Drive extends SubsystemBase {
   }
 
   public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
-    final PhotonPipelineResult photonLatestResult = photonLimelightFront.getLatestResult();
+    final List<PhotonPipelineResult> photonLatestResult = photonLimelightFront.getAllUnreadResults();
 
     photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
-    return photonPoseEstimator.update(photonLatestResult);
+    return photonPoseEstimator.update(photonLatestResult.get(photonLatestResult.size() - 1));
   }
 
   @Override

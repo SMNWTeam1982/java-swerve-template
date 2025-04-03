@@ -63,9 +63,9 @@ public final class Constants {
     public static final boolean GYRO_REVERSED = false;
 
     public static final Translation2d FRONT_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(0.2635, 0.2635);
+    public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, -0.2635);
+    public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(-0.2635, 0.2635);
+    public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(-0.2635, -0.2635);
 
     public static final Transform3d CAMERA_POSITION_RELATIVE_TO_ROBOT = new Transform3d(
         new Translation3d(
