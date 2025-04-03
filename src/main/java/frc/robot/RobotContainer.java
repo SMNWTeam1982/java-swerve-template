@@ -6,10 +6,12 @@ package frc.robot;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.Autos;
 import frc.robot.subsystems.Swerve.Drive;
 
+import com.pathplanner.lib.auto.AutoBuilder;
 
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -25,12 +27,17 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   private final Drive driveTrain = new Drive();
 
+  private final SendableChooser<Command> autoChooser;
+
+
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.DRIVE_CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
+
+    autoChooser = AutoBuilder.buildAutoChooser();
     // Configure the trigger bindings
     configureDriverBindings();
 
@@ -44,6 +51,7 @@ public class RobotContainer {
           false
         ), driveTrain)
     );
+    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   /**
@@ -64,6 +72,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return Autos.exampleAuto(driveTrain);
+    return autoChooser.getSelected();
   }
 }

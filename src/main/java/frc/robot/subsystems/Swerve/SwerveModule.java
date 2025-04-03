@@ -131,4 +131,16 @@ public class SwerveModule extends SubsystemBase {
     public void updateDrivePID(double p, double i, double d) {
         drivePIDController.setPID(p, i, d);
     }
+
+    /**
+     * Returns the current state of the module
+     * 
+     * @return The current SwerveModuleState of the module
+     */
+    public SwerveModuleState getState() {
+        return new SwerveModuleState(
+            driveEncoder.getVelocity(),
+            Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble())
+        );
+    }
 }

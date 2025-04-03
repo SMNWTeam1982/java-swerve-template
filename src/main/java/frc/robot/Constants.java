@@ -4,6 +4,8 @@
 
 package frc.robot;
 
+import com.fasterxml.jackson.annotation.JsonCreator.Mode;
+
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -25,7 +27,10 @@ import edu.wpi.first.wpilibj.TimedRobot;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+  // Set this to Mode.REPLAY for AdvantageKit Replay
+  public static final Mode simMode = Mode.DEFAULT;
   public static class OperatorConstants {
+    public static final String PROJECT_NAME = "Swerve Template";
     public static final String PHOTONVISION_FRONT_CAMERA_NAME = "limelight-front";
     public static final int DRIVE_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;

@@ -138,6 +138,10 @@ $RECYCLE.BIN/
 ### Gradle ###
 .gradle
 /build/
+gradle.properties
+
+# Ignore build side-effect for AdvantageKit
+src/main/java/frc/robot/BuildConstants.java
 
 # Ignore Gradle GUI config
 gradle-app.setting
