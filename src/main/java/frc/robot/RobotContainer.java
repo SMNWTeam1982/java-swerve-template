@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
  */
 public class RobotContainer {
   // The robot's subsystems and commands are defined here...
-  private final Drive driveTrain = new Drive();
+  final Drive driveTrain = new Drive();
 
   private final SendableChooser<Command> autoChooser;
 

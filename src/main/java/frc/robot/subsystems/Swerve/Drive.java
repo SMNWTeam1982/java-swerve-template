@@ -44,25 +44,20 @@ public class Drive extends SubsystemBase {
 
   private final Pigeon2 gyro = new Pigeon2(0);;
 
+  private Field2d field = new Field2d();
+
   private final SwerveDrivePoseEstimator swervePoseEstimator = new SwerveDrivePoseEstimator(
-      DriveConstants.SWERVE_DRIVE_KINEMATICS,
-      new Rotation2d(gyro.getYaw().getValue()),
-      new SwerveModulePosition[] {
-          frontLeft.getPosition(),
-          frontRight.getPosition(),
-          rearLeft.getPosition(),
-          rearRight.getPosition()
-      },
-      new Pose2d(),
-      VecBuilder.fill(0.05, 0.05, 1),
-      VecBuilder.fill(0.5, 0.5, 1));;
+      DriveConstants.SWERVE_DRIVE_KINEMATICS, new Rotation2d(gyro.getYaw().getValue()),
+      new SwerveModulePosition[] {frontLeft.getPosition(), frontRight.getPosition(),
+          rearLeft.getPosition(), rearRight.getPosition()},
+      new Pose2d(), VecBuilder.fill(0.05, 0.05, 1), VecBuilder.fill(0.5, 0.5, 1));;
 
-  PhotonCamera photonLimelightFront = new PhotonCamera(OperatorConstants.PHOTONVISION_FRONT_CAMERA_NAME);
+  public PhotonCamera photonLimelightFront =
+      new PhotonCamera(OperatorConstants.PHOTONVISION_FRONT_CAMERA_NAME);
 
-  PhotonPoseEstimator photonPoseEstimator = new PhotonPoseEstimator(
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
-      PoseStrategy.LOWEST_AMBIGUITY,
-      DriveConstants.CAMERA_POSITION_RELATIVE_TO_ROBOT);
+  PhotonPoseEstimator photonPoseEstimator =
+      new PhotonPoseEstimator(AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
+          PoseStrategy.LOWEST_AMBIGUITY, DriveConstants.CAMERA_POSITION_RELATIVE_TO_ROBOT);
 
   public Drive() {
     gyro.reset();
@@ -71,20 +66,22 @@ public class Drive extends SubsystemBase {
     RobotConfig config;
     try {
       config = RobotConfig.fromGUISettings();
-      AutoBuilder.configure(
-          this::getPose, // Robot pose supplier
-          this::resetOdometry, // Method to reset odometry (will be called if your auto has a starting pose)
+      AutoBuilder.configure(this::getPose, // Robot pose supplier
+          this::resetOdometry, // Method to reset odometry (will be called if your auto has a
+                               // starting pose)
           this::getRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-          (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot given ROBOT RELATIVE
-                                                                // ChassisSpeeds. Also optionally outputs individual
+          (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot
+                                                                // given ROBOT RELATIVE
+                                                                // ChassisSpeeds. Also optionally
+                                                                // outputs individual
                                                                 // module feedforwards
-          new PPHolonomicDriveController( // PPHolonomicController is the built in path following controller for
+          new PPHolonomicDriveController( // PPHolonomicController is the built in path following
+                                          // controller for
                                           // holonomic
                                           // drive trains
               new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
               new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
-          ),
-          config, // The robot configuration
+          ), config, // The robot configuration
           () -> {
             // Boolean supplier that controls when the path will be mirrored for the red
             // alliance
@@ -96,45 +93,43 @@ public class Drive extends SubsystemBase {
               return alliance.get() == DriverStation.Alliance.Red;
             }
             return false;
-          },
-          this // Reference to this subsystem to set requirements
+          }, this // Reference to this subsystem to set requirements
       );
     } catch (Exception e) {
       // Handle exception as needed
       e.printStackTrace();
     }
-    SmartDashboard.putData("Field", new Field2d());
+    SmartDashboard.putData("Field", field);
   }
 
   public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
-    final List<PhotonPipelineResult> photonLatestResult = photonLimelightFront.getAllUnreadResults();
+    final List<PhotonPipelineResult> photonLatestResult =
+        photonLimelightFront.getAllUnreadResults();
 
     photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
+    SmartDashboard.putBoolean("Vision Target Locked",
+        photonLatestResult.get(photonLatestResult.size() - 1).hasTargets());
     return photonPoseEstimator.update(photonLatestResult.get(photonLatestResult.size() - 1));
   }
 
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
-    swervePoseEstimator.update(
-        gyro.getRotation2d(),
-        new SwerveModulePosition[] {
-            frontLeft.getPosition(),
-            frontRight.getPosition(),
-            rearLeft.getPosition(),
-            rearRight.getPosition()
-        });
+    swervePoseEstimator.update(gyro.getRotation2d(),
+        new SwerveModulePosition[] {frontLeft.getPosition(), frontRight.getPosition(),
+            rearLeft.getPosition(), rearRight.getPosition()});
     var visionEst = getEstimatedGlobalPose(swervePoseEstimator.getEstimatedPosition());
-    visionEst.ifPresent(
-        est -> {
-          swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
-        });
+    visionEst.ifPresent(est -> {
+      swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
+    });
+
+    field.setRobotPose(swervePoseEstimator.getEstimatedPosition());
   }
 
   /**
    * Returns the currently-estimated pose of the robot.
    *
-   * @return The pose.
+   * @return The pose as a Pose2d object.
    */
   public Pose2d getPose() {
     return swervePoseEstimator.getEstimatedPosition();
@@ -146,33 +141,27 @@ public class Drive extends SubsystemBase {
    * @param pose The pose to which to set the odometry.
    */
   public void resetOdometry(Pose2d pose) {
-    swervePoseEstimator.resetPosition(
-        gyro.getRotation2d(),
-        new SwerveModulePosition[] {
-            frontLeft.getPosition(),
-            frontRight.getPosition(),
-            rearLeft.getPosition(),
-            rearRight.getPosition()
-        },
+    swervePoseEstimator.resetPosition(gyro.getRotation2d(),
+        new SwerveModulePosition[] {frontLeft.getPosition(), frontRight.getPosition(),
+            rearLeft.getPosition(), rearRight.getPosition()},
         pose);
   }
 
   /**
    * Method to drive the robot using joystick info.
    *
-   * @param xSpeed        Speed of the robot in the x direction (forward).
-   * @param ySpeed        Speed of the robot in the y direction (sideways).
-   * @param rot           Angular rate of the robot.
-   * @param fieldRelative Whether the provided x and y speeds are relative to the
-   *                      field.
+   * @param xSpeed Speed of the robot in the x direction (forward).
+   * @param ySpeed Speed of the robot in the y direction (sideways).
+   * @param rot Angular rate of the robot.
+   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
    */
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    var swerveModuleStates = DriveConstants.SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(
-        ChassisSpeeds.discretize(
-            fieldRelative ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, gyro.getRotation2d())
-                : new ChassisSpeeds(xSpeed, ySpeed, rot),
-            DriveConstants.DRIVE_PERIOD));
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, DriveConstants.SPEED_CAP_METERS_PER_SECOND);
+    var swerveModuleStates = DriveConstants.SWERVE_DRIVE_KINEMATICS
+        .toSwerveModuleStates(ChassisSpeeds.discretize(fieldRelative
+            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, gyro.getRotation2d())
+            : new ChassisSpeeds(xSpeed, ySpeed, rot), DriveConstants.DRIVE_PERIOD));
+    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
+        DriveConstants.SPEED_CAP_METERS_PER_SECOND);
     frontLeft.setDesiredState(swerveModuleStates[0]);
     frontRight.setDesiredState(swerveModuleStates[1]);
     rearLeft.setDesiredState(swerveModuleStates[2]);
@@ -185,8 +174,8 @@ public class Drive extends SubsystemBase {
    * @param desiredStates The desired SwerveModule states.
    */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
-    SwerveDriveKinematics.desaturateWheelSpeeds(
-        desiredStates, DriveConstants.SPEED_CAP_METERS_PER_SECOND);
+    SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates,
+        DriveConstants.SPEED_CAP_METERS_PER_SECOND);
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     rearLeft.setDesiredState(desiredStates[2]);
@@ -222,21 +211,23 @@ public class Drive extends SubsystemBase {
    * @return Robot relative ChassisSpeeds
    */
   public ChassisSpeeds getRelativeSpeeds() {
-    SwerveModuleState moduleStates[] = {
-        frontLeft.getState(),
-        frontRight.getState(),
-        rearLeft.getState(),
-        rearRight.getState()
-    };
+    SwerveModuleState moduleStates[] =
+        {frontLeft.getState(), frontRight.getState(), rearLeft.getState(), rearRight.getState()};
     return DriveConstants.SWERVE_DRIVE_KINEMATICS.toChassisSpeeds(moduleStates);
   }
 
   public void driveRobotRelative(ChassisSpeeds speeds) {
-    drive(
-        speeds.vxMetersPerSecond,
-        speeds.vyMetersPerSecond,
-        speeds.omegaRadiansPerSecond,
-        false);
+    drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, false);
   }
 
+  public void logPoseEstimation() {
+    Pose2d currentPose = getPose();
+    double compositePoseData[] =
+        {currentPose.getX(), currentPose.getY(), currentPose.getRotation().getRadians()};
+    field.setRobotPose(currentPose);
+    SmartDashboard.putNumber("Robot X", compositePoseData[0]);
+    SmartDashboard.putNumber("Robot Y", compositePoseData[1]);
+    SmartDashboard.putNumber("Robot Rotation", compositePoseData[2]);
+    SmartDashboard.putNumberArray("Robot pose Data", compositePoseData);
+  }
 }

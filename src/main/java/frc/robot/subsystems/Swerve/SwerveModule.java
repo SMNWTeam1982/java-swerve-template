@@ -12,7 +12,7 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-
+import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -30,36 +30,33 @@ public class SwerveModule extends SubsystemBase {
     private SimpleMotorFeedforward driveFeedforward;
 
     /**
-     * Constructs an instance of a SwerveModule with a drive motor, turn motor, and
-     * turn encoder.
+     * Constructs an instance of a SwerveModule with a drive motor, turn motor, and turn encoder.
      *
      * @param driveMotorID CAN ID of the drive motor
-     * @param turnMotorID  CAN ID of the turning motor
-     * @param encoderID    CAN ID of the module's absolute encoder
+     * @param turnMotorID CAN ID of the turning motor
+     * @param encoderID CAN ID of the module's absolute encoder
      */
     public SwerveModule(int driveMotorID, int turnMotorID, int encoderID) {
         driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless);
+        driveMotor.configure(SwerveModuleConstants.DRIVE_MOTOR_CONFIG,
+                SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
         turnMotor = new SparkMax(turnMotorID, MotorType.kBrushless);
+        turnMotor.configure(SwerveModuleConstants.TURN_MOTOR_CONFIG,
+                SparkBase.ResetMode.kResetSafeParameters, SparkBase.PersistMode.kPersistParameters);
 
         turnEncoder = new CANcoder(encoderID);
         driveEncoder = driveMotor.getEncoder();
 
-        drivePIDController = new PIDController(
-                SwerveModuleConstants.DRIVE_PROPORTIONAL_GAIN,
+        drivePIDController = new PIDController(SwerveModuleConstants.DRIVE_PROPORTIONAL_GAIN,
                 SwerveModuleConstants.DRIVE_INTEGRAL_GAIN,
-                SwerveModuleConstants.DRIVE_DERIVATIVE_GAIN
-        );
+                SwerveModuleConstants.DRIVE_DERIVATIVE_GAIN);
 
-        turnPIDController = new PIDController(
-                SwerveModuleConstants.TURN_PROPORTIONAL_GAIN,
+        turnPIDController = new PIDController(SwerveModuleConstants.TURN_PROPORTIONAL_GAIN,
                 SwerveModuleConstants.TURN_INTEGRAL_GAIN,
-                SwerveModuleConstants.TURN_DERIVATIVE_GAIN
-        );
+                SwerveModuleConstants.TURN_DERIVATIVE_GAIN);
 
-        driveFeedforward = new SimpleMotorFeedforward(
-                SwerveModuleConstants.DRIVE_STATIC_GAIN_VOLTS,
-                SwerveModuleConstants.DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER
-        );
+        driveFeedforward = new SimpleMotorFeedforward(SwerveModuleConstants.DRIVE_STATIC_GAIN_VOLTS,
+                SwerveModuleConstants.DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER);
 
         turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
     }
@@ -69,9 +66,9 @@ public class SwerveModule extends SubsystemBase {
      */
     public SwerveModulePosition getPosition() {
         return new SwerveModulePosition(
-                driveEncoder.getPosition() * SwerveModuleConstants.POSITION_TO_METERS_TRAVELED_MULTIPLIER,
-                Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble())
-        );
+                driveEncoder.getPosition()
+                        * SwerveModuleConstants.POSITION_TO_METERS_TRAVELED_MULTIPLIER,
+                Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
     }
 
     /**
@@ -80,18 +77,20 @@ public class SwerveModule extends SubsystemBase {
      * @param desiredState Desired state with speed (m/s) and angle (Rotation2d)
      */
     public void setDesiredState(SwerveModuleState desiredState) {
-        Rotation2d encoderRotation = Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
+        Rotation2d encoderRotation =
+                Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
 
         desiredState.optimize(encoderRotation);
 
         desiredState.cosineScale(encoderRotation);
 
         double drivePidOutput = drivePIDController.calculate(
-                driveEncoder.getVelocity() * SwerveModuleConstants.RPM_TO_METERS_PER_SECOND_CONVERSION_MULTIPLIER,
-                desiredState.speedMetersPerSecond
-        );
+                driveEncoder.getVelocity()
+                        * SwerveModuleConstants.RPM_TO_METERS_PER_SECOND_CONVERSION_MULTIPLIER,
+                desiredState.speedMetersPerSecond);
 
-        double driveOutput = drivePidOutput + driveFeedforward.calculate(desiredState.speedMetersPerSecond);
+        double driveOutput =
+                drivePidOutput + driveFeedforward.calculate(desiredState.speedMetersPerSecond);
 
         if (driveOutput > 12.0) {
             driveOutput = 12.0;
@@ -100,10 +99,8 @@ public class SwerveModule extends SubsystemBase {
             driveOutput = 12.0;
         }
 
-        double turnOutput = turnPIDController.calculate(
-                encoderRotation.getRadians(),
-                desiredState.angle.getRadians()
-        );
+        double turnOutput = turnPIDController.calculate(encoderRotation.getRadians(),
+                desiredState.angle.getRadians());
 
         if (turnOutput > 1.0) {
             turnOutput = 1.0;
@@ -144,9 +141,7 @@ public class SwerveModule extends SubsystemBase {
      * @return The current SwerveModuleState of the module
      */
     public SwerveModuleState getState() {
-        return new SwerveModuleState(
-            driveEncoder.getVelocity(),
-            Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble())
-        );
+        return new SwerveModuleState(driveEncoder.getVelocity(),
+                Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
     }
 }
