@@ -7,11 +7,13 @@ package frc.robot;
 
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.TimedRobot;
 
@@ -91,5 +93,97 @@ public final class Constants {
 
     /** Replaying from a log file. */
     REPLAY
+  }
+
+  public static class ElevatorConstants {
+    public static final double L1_TARGET_HEIGHT_METERS = 0.61;
+    public static final double L2_TARGET_HEIGHT_METERS = 0.9;
+    public static final double L3_TARGET_HEIGHT_METERS = 1.3;
+    public static final double L4_TARGET_HEIGHT_METERS = 1.8;
+    public static final double INTAKE_TARGET_HEIGHT_METERS = 0.78;
+
+    public static final double HIGH_ALGAE_TARGET_HEIGHT_METERS = 1.2;
+    public static final double PROCESSOR_TARGET_HEIGHT_METERS = 0.6;
+
+    public static final double IDLE_TARGET_HEIGHT_METERS = 0.6;
+
+    public static final double ALTITUDE_PROPORTIONAL_GAIN = 0.5;
+    public static final double ALTITUDE_INTEGRAL_GAIN = 0.0;
+    public static final double ALTITUDE_DERIVATIVE_GAIN = 0.0;
+
+    public static final double ROTATIONS_TO_HEIGHT_METERS_MULTIPLIER = 1.24744 / 110.5728;
+    public static final double HEIGHT_OFFSET = 0.56256;
+    public static final double MAX_HEIGHT_METERS = 1.81;
+    public static final double MIN_HEIGHT_METERS = HEIGHT_OFFSET;
+
+    public static final SparkBaseConfig ALTITUDE_MOTOR_CONFIG =
+        new SparkMaxConfig().smartCurrentLimit(30).idleMode(SparkBaseConfig.IdleMode.kCoast);
+
+    public static enum ElevatorState {
+      IDLE,
+      CORAL_SCORE,
+      CORAL_INTAKE,
+      ALGAE_SCORE,
+      ALGAE_INTAKE,
+      CORAL_SCORE_ALGAE_INTAKE,
+    }
+  }
+
+  public static class IntakeConstants {
+    public static final double REEF_ACTIVE_TIME = 0.5;
+    public static final double STATION_ACTIVE_TIME = 8.0;
+
+    public static final double CORAL_INTAKE_SPEED = 0.6;
+    public static final double CORAL_EJECT_SPEED = -0.4;
+    public static final double ALGAE_INTAKE_MAX_SPEED = 0.5;
+
+    public static final Rotation2d L1_CORAL_WRIST_POSITION = Rotation2d.fromDegrees(0);
+    public static final Rotation2d MID_LEVEL_CORAL_WRIST_POSTITION = Rotation2d.fromDegrees(-15);
+    public static final Rotation2d L4_CORAL_WRIST_POSITION = Rotation2d.fromDegrees(0);
+    public static final Rotation2d INTAKE_CORAL_WRIST_POSITION = Rotation2d.fromDegrees(35);
+
+    public static final Rotation2d CORAL_WRIST_STARTING_POSITION = Rotation2d.fromDegrees(72);
+    public static final Rotation2d CORAL_WRIST_STOW_POSITION = Rotation2d.fromDegrees(60);
+
+    public static final double CORAL_ROTATIONS_TO_DEGREES_MULTIPLIER = 72 / -5.2857;
+    public static final double CORAL_POSITION_OFFSET = 72;
+
+    public static final int ALGAE_RIGHT_MOTOR_PDP_CHANNEL = 11;
+    public static final int ALGAE_LEFT_MOTOR_PDP_CHANNEL = 15;
+    public static final int CORAL_WRIST_MOTOR_PDP_CHANNEL = 12;
+    public static final int CORAL_INTAKE_MOTOR_PDP_CHANNEL = 13;
+
+    //public static final double ALGAE_INTAKE_CURRENT_THRESHHOLD = 25;
+    //public static final double CORAL_INTAKE_CURRENT_THRESHHOLD = 10;
+    //public static final double CORAL_EJECT_CURRENT_THRESHHOLD = 2;
+
+    public static final double CORAL_WRIST_STATIC_GAIN = 0.01;
+    public static final double CORAL_WRIST_GRAVITY_GAIN = 0.6;
+    public static final double CORAL_WRIST_VELOCITY_GAIN = 0.0;
+
+    public static final double CORAL_WRIST_PROPORTIONAL_GAIN = 8;
+    public static final double CORAL_WRIST_INGEGRAL_GAIN = 0.1;
+    public static final double CORAL_WRIST_DERIVATIVE_GAIN = 0.2;
+
+    public static final double CORAL_WRIST_MAX_VELOCITY_RADIANS_PER_SECOND = Math.PI / 4;
+    public static final double CORAL_WRIST_MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = Math.PI;
+
+    public static final Constraints CORAL_WRIST_CONSTRAINTS =
+        new Constraints(CORAL_WRIST_MAX_VELOCITY_RADIANS_PER_SECOND,
+            CORAL_WRIST_MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED);
+
+    public static final SparkBaseConfig WRIST_MOTOR_CONFIG =
+        new SparkMaxConfig().smartCurrentLimit(27);
+    public static final SparkBaseConfig INTAKE_MOTOR_CONFIG =
+        new SparkMaxConfig().smartCurrentLimit(25);
+  }
+
+  public static enum IntakeState {
+    /** State for coral and algae intake running in */
+    IN,
+    /** State for coral and algae intake running out */
+    OUT,
+    /** State for coral and algae intake not running */
+    HOLD
   }
 }
