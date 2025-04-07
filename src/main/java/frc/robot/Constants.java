@@ -33,8 +33,6 @@ public final class Constants {
     public static final String PHOTONVISION_FRONT_CAMERA_NAME = "limelight-front";
     public static final int DRIVE_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
-    public static final boolean IS_RIGHT_ALGAE_MOTOR_ENABLED = false;
-    public static final boolean IS_LEFT_ALGAE_MOTOR_ENABLED = true;
   }
 
   public static class SwerveModuleConstants {
