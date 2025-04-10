@@ -9,7 +9,8 @@ import frc.robot.Constants.OperatorConstants;
 
 import java.util.List;
 import java.util.Optional;
-
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -33,6 +34,8 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.*;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 // Command-Based re-implementation of the Drivetrain Class in Python
@@ -230,4 +233,23 @@ public class Drive extends SubsystemBase {
     SmartDashboard.putNumber("Robot Rotation", compositePoseData[2]);
     SmartDashboard.putNumberArray("Robot pose Data", compositePoseData);
   }
+
+  public static Command drive(
+    Drive driveTrain,
+    DoubleSupplier xSupplier,
+    DoubleSupplier ySupplier,
+    DoubleSupplier rotationSupplier,
+    BooleanSupplier fieldRelative) {
+      return Commands.run(
+        () -> {
+          driveTrain.drive(
+            xSupplier.getAsDouble() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
+            ySupplier.getAsDouble() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
+            rotationSupplier.getAsDouble() * 3,
+            fieldRelative.getAsBoolean()
+          );
+        },
+        driveTrain
+      );
+    }
 }

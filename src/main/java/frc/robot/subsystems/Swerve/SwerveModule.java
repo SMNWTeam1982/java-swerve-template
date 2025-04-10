@@ -6,7 +6,6 @@ package frc.robot.subsystems.Swerve;
 
 import frc.robot.Constants.SwerveModuleConstants;
 
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -18,7 +17,7 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.ctre.phoenix6.hardware.CANcoder;
 
-public class SwerveModule extends SubsystemBase {
+public class SwerveModule {
     private SparkMax driveMotor;
     private SparkMax turnMotor;
     private CANcoder turnEncoder;

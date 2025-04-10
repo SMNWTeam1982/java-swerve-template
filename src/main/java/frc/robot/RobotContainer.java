@@ -4,16 +4,14 @@
 
 package frc.robot;
 
-import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.Swerve.Drive;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 
@@ -33,6 +31,8 @@ public class RobotContainer {
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
       new CommandXboxController(OperatorConstants.DRIVE_CONTROLLER_PORT);
+  private final CommandJoystick operatorController =
+      new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -40,32 +40,28 @@ public class RobotContainer {
     autoChooser = AutoBuilder.buildAutoChooser();
     // Configure the trigger bindings
     configureDriverBindings();
+    configureOperatorBindings();
 
-    driveTrain.setDefaultCommand(
-      new RunCommand(
-        () ->
-        driveTrain.drive(
-          driverController.getLeftX() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
-          driverController.getLeftY() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
-          driverController.getRightX() * 3,
-          false
-        ),
-        driveTrain
-      )
-    );
+
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   /**
    * Use this method to define your trigger->command mappings. Triggers can be created via the
    * {@link Trigger#Trigger(java.util.function.BooleanSupplier)} constructor with an arbitrary
-   * predicate, or via the named factories in {@link
-   * edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for {@link
-   * CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
-   * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
-   * joysticks}.
+   * predicate, or via the named factories in
+   * {@link edu.wpi.first.wpilibj2.command.button.CommandGenericHID}'s subclasses for
+   * {@link CommandXboxController
+   * Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller PS4} controllers or
+   * {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight joysticks}.
    */
-  private void configureDriverBindings() {}
+  private void configureDriverBindings() {
+    driveTrain.setDefaultCommand(Drive.drive(driveTrain, () -> driverController.getLeftX(),
+        () -> driverController.getLeftY(), () -> driverController.getRightX(), () -> false));
+
+  }
+
+  private void configureOperatorBindings() {}
 
   /**
    * Use this to pass the autonomous command to the main {@link Robot} class.
