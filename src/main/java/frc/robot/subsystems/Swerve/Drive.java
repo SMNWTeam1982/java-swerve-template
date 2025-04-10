@@ -159,12 +159,15 @@ public class Drive extends SubsystemBase {
    * @param fieldRelative Whether the provided x and y speeds are relative to the field.
    */
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    var swerveModuleStates = DriveConstants.SWERVE_DRIVE_KINEMATICS
-        .toSwerveModuleStates(ChassisSpeeds.discretize(fieldRelative
-            ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, gyro.getRotation2d())
-            : new ChassisSpeeds(xSpeed, ySpeed, rot), DriveConstants.DRIVE_PERIOD));
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates,
-        DriveConstants.SPEED_CAP_METERS_PER_SECOND);
+    final ChassisSpeeds speeds;
+    if (fieldRelative) {
+      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, getPose().getRotation());
+    } else {
+      speeds = new ChassisSpeeds(xSpeed, ySpeed, rot);
+    }
+
+    SwerveModuleState[] swerveModuleStates = DriveConstants.SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD));
+    
     frontLeft.setDesiredState(swerveModuleStates[0]);
     frontRight.setDesiredState(swerveModuleStates[1]);
     rearLeft.setDesiredState(swerveModuleStates[2]);
