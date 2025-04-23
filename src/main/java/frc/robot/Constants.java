@@ -29,55 +29,55 @@ public final class Constants {
   public static final Mode simMode = Mode.REAL;
 
   public static class OperatorConstants {
-    public static final String PROJECT_NAME = "Swerve Template";
-    public static final String PHOTONVISION_FRONT_CAMERA_NAME = "limelight-front";
-    public static final int DRIVE_CONTROLLER_PORT = 0;
-    public static final int OPERATOR_CONTROLLER_PORT = 1;
+    public static final String projectName = "Swerve Template";
+    public static final String photonFrontCameraName = "limelight-front";
+    public static final int driverControllerPort = 0;
+    public static final int operatorControllerPort = 1;
   }
 
   public static class SwerveModuleConstants {
-    public static final double POSITION_TO_METERS_TRAVELED_MULTIPLIER = 0.31927 / 6.75;
-    public static final double RPM_TO_METERS_PER_SECOND_CONVERSION_MULTIPLIER =
-        POSITION_TO_METERS_TRAVELED_MULTIPLIER / 60;
+    public static final double positionToMetersMultiplier = 0.31927 / 6.75;
+    public static final double rpmToMpsMultiplier =
+        positionToMetersMultiplier / 60;
 
-    public static final double DRIVE_PROPORTIONAL_GAIN = 0.0;
-    public static final double DRIVE_INTEGRAL_GAIN = 0.0;
-    public static final double DRIVE_DERIVATIVE_GAIN = 0.0;
+    public static final double headingPorportionalGain = 1.0;
+    public static final double headingIntegralGain = 0.0;
+    public static final double headingDerivativeGain = 0.0;
 
-    public static final double TURN_PROPORTIONAL_GAIN = 0.73;
-    public static final double TURN_INTEGRAL_GAIN = 0.0;
-    public static final double TURN_DERIVATIVE_GAIN = 0.01;
+    public static final double turnProportionalGain = 0.73;
+    public static final double turnIntegralGain = 0.0;
+    public static final double turnDerivativeGain = 0.01;
 
-    public static final double DRIVE_STATIC_GAIN_VOLTS = 0.05;
-    public static final double DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER = 2.87;
+    public static final double driveStaticGain = 0.05;
+    public static final double driveVelocityGainSecondsPerMeter = 2.87;
 
-    public static final SparkBaseConfig DRIVE_MOTOR_CONFIG =
+    public static final SparkBaseConfig driveMotorConfig =
         new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-    public static final SparkBaseConfig TURN_MOTOR_CONFIG =
+    public static final SparkBaseConfig turnMotorConfig =
         new SparkMaxConfig().smartCurrentLimit(30).idleMode(SparkBaseConfig.IdleMode.kCoast);
 
   }
 
   public static class DriveConstants {
-    public static final double PHYSICAL_MAX_SPEED_METERS_PER_SECOND = 3.8;
+    public static final double physicalMaxSpeedMps = 3.8;
 
-    public static final double SPEED_CAP_METERS_PER_SECOND = 2.5;
+    public static final double artificialMaxSpeedMps = 2.5;
 
-    public static final double DRIVE_PERIOD = TimedRobot.kDefaultPeriod;
-    public static final boolean GYRO_REVERSED = false;
+    public static final double drivePeriod = TimedRobot.kDefaultPeriod;
+    public static final boolean gyroReversed = false;
 
-    public static final Translation2d FRONT_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, -0.2635);
-    public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(-0.2635, 0.2635);
-    public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(-0.2635, -0.2635);
+    public static final Translation2d frontLeftTranslation = new Translation2d(0.2635, 0.2635);
+    public static final Translation2d frontRightTranslation = new Translation2d(0.2635, -0.2635);
+    public static final Translation2d rearLeftTranslation = new Translation2d(-0.2635, 0.2635);
+    public static final Translation2d rearRightTranslation = new Translation2d(-0.2635, -0.2635);
 
-    public static final Transform3d CAMERA_POSITION_RELATIVE_TO_ROBOT =
+    public static final Transform3d frontCameraRelativeToRobot =
         new Transform3d(new Translation3d(Units.inchesToMeters(12.0), Units.inchesToMeters(0.0),
             Units.inchesToMeters(9.75)), new Rotation3d(0.0, 10.0, 0.0));
 
-    public static final SwerveDriveKinematics SWERVE_DRIVE_KINEMATICS =
-        new SwerveDriveKinematics(FRONT_LEFT_TRANSLATION, FRONT_RIGHT_TRANSLATION,
-            REAR_LEFT_TRANSLATION, REAR_RIGHT_TRANSLATION);
+    public static final SwerveDriveKinematics swerveKinematics =
+        new SwerveDriveKinematics(frontLeftTranslation, frontRightTranslation,
+            rearLeftTranslation, rearRightTranslation);
   }
 
   public static enum Mode {

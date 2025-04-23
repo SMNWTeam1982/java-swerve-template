@@ -40,23 +40,29 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 // Command-Based re-implementation of the Drivetrain Class in Python
 public class Drive extends SubsystemBase {
-  private final SwerveModule frontLeft = new SwerveModule(7, 8, 4);;
+  private final SwerveModule frontLeft = new SwerveModule(7, 8, 4);
   private final SwerveModule frontRight = new SwerveModule(1, 2, 3);
   private final SwerveModule rearLeft = new SwerveModule(5, 4, 1);
   private final SwerveModule rearRight = new SwerveModule(3, 6, 2);
 
-  private final Pigeon2 gyro = new Pigeon2(0);;
+  private final Pigeon2 gyro = new Pigeon2(0);
 
   private Field2d field = new Field2d();
 
   private final SwerveDrivePoseEstimator swervePoseEstimator = new SwerveDrivePoseEstimator(
-      DriveConstants.SWERVE_DRIVE_KINEMATICS, new Rotation2d(gyro.getYaw().getValue()),
-      new SwerveModulePosition[] {frontLeft.getPosition(), frontRight.getPosition(),
-          rearLeft.getPosition(), rearRight.getPosition()},
-      new Pose2d(), VecBuilder.fill(0.05, 0.05, 1), VecBuilder.fill(0.5, 0.5, 1));;
+      DriveConstants.swerveKinematics, 
+      gyro.getRotation2d(),
+      new SwerveModulePosition[] {
+        frontLeft.getPosition(),
+        frontRight.getPosition(),
+        rearLeft.getPosition(),
+        rearRight.getPosition()
+      },
+      new Pose2d()
+  );
 
   public PhotonCamera photonLimelightFront =
-      new PhotonCamera(OperatorConstants.PHOTONVISION_FRONT_CAMERA_NAME);
+      new PhotonCamera(OperatorConstants.photonFrontCameraName);
 
   PhotonPoseEstimator photonPoseEstimator =
       new PhotonPoseEstimator(AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
