@@ -7,11 +7,17 @@ package frc.robot;
 
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.TimedRobot;
 
@@ -28,21 +34,25 @@ public final class Constants {
   // Set this to Mode.REPLAY for AdvantageKit Replay
   public static final Mode simMode = Mode.REAL;
 
+  /**
+   * Constants for general configuration of the robot project
+   */
   public static class OperatorConstants {
     public static final String projectName = "Swerve Template";
-    public static final String photonFrontCameraName = "limelight-front";
     public static final int driverControllerPort = 0;
     public static final int operatorControllerPort = 1;
+    public static final boolean enableQuestNav = true;
+    public static final boolean enablePhotonLib = false;
+    public static final boolean isSim = true;
   }
 
+  /**
+   * Constants to configure Swerve Modules
+   */
   public static class SwerveModuleConstants {
     public static final double positionToMetersMultiplier = 0.31927 / 6.75;
     public static final double rpmToMpsMultiplier =
         positionToMetersMultiplier / 60;
-
-    public static final double headingPorportionalGain = 1.0;
-    public static final double headingIntegralGain = 0.0;
-    public static final double headingDerivativeGain = 0.0;
 
     public static final double turnProportionalGain = 0.73;
     public static final double turnIntegralGain = 0.0;
@@ -58,6 +68,9 @@ public final class Constants {
 
   }
 
+  /**
+   * Constants to configure Drivetrain
+   */
   public static class DriveConstants {
     public static final double physicalMaxSpeedMps = 3.8;
 
@@ -66,18 +79,55 @@ public final class Constants {
     public static final double drivePeriod = TimedRobot.kDefaultPeriod;
     public static final boolean gyroReversed = false;
 
+    public static final double headingPorportionalGain = 1.0;
+    public static final double headingIntegralGain = 0.0;
+    public static final double headingDerivativeGain = 0.0;
+
     public static final Translation2d frontLeftTranslation = new Translation2d(0.2635, 0.2635);
     public static final Translation2d frontRightTranslation = new Translation2d(0.2635, -0.2635);
     public static final Translation2d rearLeftTranslation = new Translation2d(-0.2635, 0.2635);
     public static final Translation2d rearRightTranslation = new Translation2d(-0.2635, -0.2635);
 
-    public static final Transform3d frontCameraRelativeToRobot =
-        new Transform3d(new Translation3d(Units.inchesToMeters(12.0), Units.inchesToMeters(0.0),
-            Units.inchesToMeters(9.75)), new Rotation3d(0.0, 10.0, 0.0));
-
     public static final SwerveDriveKinematics swerveKinematics =
         new SwerveDriveKinematics(frontLeftTranslation, frontRightTranslation,
             rearLeftTranslation, rearRightTranslation);
+  }
+
+  /**
+   * Constants to configure QuestNav and PhotonLib vision sources
+   */
+  public static class VisionConstants {
+    public static final String photonFrontCameraName = "limelight-front";
+
+    public static final Matrix<N3,N1> photonLibVisionTrust = VecBuilder.fill(
+      0.5,
+      0.5,
+      1
+    );
+
+    public static final Transform3d frontCameraRelativeToRobot = new Transform3d(
+      new Translation3d(
+        Units.inchesToMeters(12.0), 
+        Units.inchesToMeters(0.0),
+        Units.inchesToMeters(9.75)
+        ), 
+      new Rotation3d(0.0, 10.0, 0.0)
+    );
+
+    public static final Matrix<N3,N1> questNavVisionTrust = VecBuilder.fill(
+      0.02,
+      0.02,
+      0.035
+    );
+
+    public static final Transform2d questRelativeToRobot = new Transform2d(
+        new Translation2d(
+          Units.inchesToMeters(12.0), 
+          0
+        ),
+        new Rotation2d(0)
+    );
+
   }
 
   public static enum Mode {

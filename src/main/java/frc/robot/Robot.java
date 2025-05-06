@@ -10,7 +10,6 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.OperatorConstants;
@@ -30,22 +29,23 @@ public class Robot extends LoggedRobot {
    * initialization code.
    */
   public Robot() {
-    Logger.recordMetadata("ProjectName", OperatorConstants.PROJECT_NAME); // Set a metadata value
-    Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+    if (!OperatorConstants.isSim) {
+      Logger.recordMetadata("ProjectName", OperatorConstants.projectName); // Set a metadata value
+      Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
 
-    if (isReal()) {
-    // Logger.addDataReceiver(new WPILOGWriter());
-    Logger.addDataReceiver(new NT4Publisher());
-    } else {
-    setUseTiming(false);
-    String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
-    // AdvantageScope (or prompt the user)
-    Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-    Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath,
-    "_sim"))); // Save outputs to a new log
+      if (isReal()) {
+        Logger.addDataReceiver(new WPILOGWriter());
+        Logger.addDataReceiver(new NT4Publisher());
+      } else {
+        // setUseTiming(false);
+        String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
+        // AdvantageScope (or prompt the user)
+        Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
+        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+      }
+      Logger.start();
     }
 
-    Logger.start();
     // Instantiate our RobotContainer. This will perform all our button bindings,
     // and put our
     // autonomous chooser on the dashboard.
@@ -70,7 +70,6 @@ public class Robot extends LoggedRobot {
     // robot's periodic
     // block in order for anything in the Command-based framework to work.
     CommandScheduler.getInstance().run();
-    m_robotContainer.driveTrain.logPoseEstimation();
   }
 
   /** This function is called once each time the robot enters Disabled mode. */

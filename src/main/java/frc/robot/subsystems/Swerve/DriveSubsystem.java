@@ -6,26 +6,17 @@ package frc.robot.subsystems.Swerve;
 
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.function.BooleanSupplier;
+import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.Vision.PhotonVisionSubsystem;
+import frc.robot.subsystems.Vision.QuestNavSubsystem;
 import java.util.function.DoubleSupplier;
-import org.photonvision.EstimatedRobotPose;
-import org.photonvision.PhotonCamera;
-import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-import org.photonvision.targeting.PhotonPipelineResult;
-
+import java.util.function.Supplier;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFields;
-import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -35,11 +26,12 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.*;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-// Command-Based re-implementation of the Drivetrain Class in Python
-public class Drive extends SubsystemBase {
+/**
+ * Command-Based Drivetrain subsytem for Swerve Drive
+ */
+public class DriveSubsystem extends SubsystemBase {
   private final SwerveModule frontLeft = new SwerveModule(7, 8, 4);
   private final SwerveModule frontRight = new SwerveModule(1, 2, 3);
   private final SwerveModule rearLeft = new SwerveModule(5, 4, 1);
@@ -49,27 +41,21 @@ public class Drive extends SubsystemBase {
 
   private Field2d field = new Field2d();
 
-  private final SwerveDrivePoseEstimator swervePoseEstimator = new SwerveDrivePoseEstimator(
-      DriveConstants.swerveKinematics, 
-      gyro.getRotation2d(),
-      new SwerveModulePosition[] {
-        frontLeft.getPosition(),
-        frontRight.getPosition(),
-        rearLeft.getPosition(),
-        rearRight.getPosition()
-      },
-      new Pose2d()
-  );
+  private QuestNavSubsystem questNav = new QuestNavSubsystem();
+  private PhotonVisionSubsystem photonVision = new PhotonVisionSubsystem();
 
-  public PhotonCamera photonLimelightFront =
-      new PhotonCamera(OperatorConstants.photonFrontCameraName);
+  private final SwerveDrivePoseEstimator swervePoseEstimator =
+      new SwerveDrivePoseEstimator(DriveConstants.swerveKinematics, gyro.getRotation2d(),
+          new SwerveModulePosition[] {frontLeft.getPosition(), frontRight.getPosition(),
+              rearLeft.getPosition(), rearRight.getPosition()},
+          new Pose2d());
 
-  PhotonPoseEstimator photonPoseEstimator =
-      new PhotonPoseEstimator(AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
-          PoseStrategy.LOWEST_AMBIGUITY, DriveConstants.CAMERA_POSITION_RELATIVE_TO_ROBOT);
+  private final PIDController headingController =
+      new PIDController(DriveConstants.headingPorportionalGain, DriveConstants.headingIntegralGain,
+          DriveConstants.headingDerivativeGain);
 
-  public Drive() {
-    gyro.reset();
+  public DriveSubsystem() {
+    zeroHeading();
 
     // Configure AutoBuilder last
     RobotConfig config;
@@ -79,11 +65,11 @@ public class Drive extends SubsystemBase {
           this::resetOdometry, // Method to reset odometry (will be called if your auto has a
                                // starting pose)
           this::getRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-          (speeds, feedforwards) -> driveRobotRelative(speeds), // Method that will drive the robot
-                                                                // given ROBOT RELATIVE
-                                                                // ChassisSpeeds. Also optionally
-                                                                // outputs individual
-                                                                // module feedforwards
+          (speeds) -> driveWithChassisSpeeds(speeds), // Method that will drive the robot
+                                                      // given ROBOT RELATIVE
+                                                      // ChassisSpeeds. Also optionally
+                                                      // outputs individual
+                                                      // module feedforwards
           new PPHolonomicDriveController( // PPHolonomicController is the built in path following
                                           // controller for
                                           // holonomic
@@ -111,28 +97,25 @@ public class Drive extends SubsystemBase {
     SmartDashboard.putData("Field", field);
   }
 
-  public Optional<EstimatedRobotPose> getEstimatedGlobalPose(Pose2d prevEstimatedRobotPose) {
-    final List<PhotonPipelineResult> photonLatestResult =
-        photonLimelightFront.getAllUnreadResults();
-
-    photonPoseEstimator.setReferencePose(prevEstimatedRobotPose);
-    SmartDashboard.putBoolean("Vision Target Locked",
-        photonLatestResult.get(photonLatestResult.size() - 1).hasTargets());
-    return photonPoseEstimator.update(photonLatestResult.get(photonLatestResult.size() - 1));
-  }
-
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
     swervePoseEstimator.update(gyro.getRotation2d(),
         new SwerveModulePosition[] {frontLeft.getPosition(), frontRight.getPosition(),
             rearLeft.getPosition(), rearRight.getPosition()});
-    var visionEst = getEstimatedGlobalPose(swervePoseEstimator.getEstimatedPosition());
-    visionEst.ifPresent(est -> {
-      swervePoseEstimator.addVisionMeasurement(est.estimatedPose.toPose2d(), est.timestampSeconds);
-    });
+    // If QuestNav is enabled and ready, add it's measurements
+    if (questNav.isQuestReady() && OperatorConstants.enableQuestNav) {
+      swervePoseEstimator.addVisionMeasurement(questNav.getEstRobotPose(),
+          questNav.getQuestNavTimestamp(), VisionConstants.questNavVisionTrust);
+    }
+    // If PhotonVision is enabled and ready, add it's measurements
+    if (OperatorConstants.enablePhotonLib) {
+      swervePoseEstimator.addVisionMeasurement(photonVision.getEstRobotPose(),
+          photonVision.getPhotonVisionTimestamp(), VisionConstants.photonLibVisionTrust);
+    }
 
-    field.setRobotPose(swervePoseEstimator.getEstimatedPosition());
+    field.setRobotPose(getPose());
+    logRobotPose();
   }
 
   /**
@@ -157,37 +140,13 @@ public class Drive extends SubsystemBase {
   }
 
   /**
-   * Method to drive the robot using joystick info.
-   *
-   * @param xSpeed Speed of the robot in the x direction (forward).
-   * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot Angular rate of the robot.
-   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
-   */
-  public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    final ChassisSpeeds speeds;
-    if (fieldRelative) {
-      speeds = ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, getPose().getRotation());
-    } else {
-      speeds = new ChassisSpeeds(xSpeed, ySpeed, rot);
-    }
-
-    SwerveModuleState[] swerveModuleStates = DriveConstants.SWERVE_DRIVE_KINEMATICS.toSwerveModuleStates(ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD));
-    
-    frontLeft.setDesiredState(swerveModuleStates[0]);
-    frontRight.setDesiredState(swerveModuleStates[1]);
-    rearLeft.setDesiredState(swerveModuleStates[2]);
-    rearRight.setDesiredState(swerveModuleStates[3]);
-  }
-
-  /**
    * Sets the swerve ModuleStates.
    *
-   * @param desiredStates The desired SwerveModule states.
+   * @param desiredStates The desired SwerveModule states as an Array of SwerveModuleStates
    */
   public void setModuleStates(SwerveModuleState[] desiredStates) {
     SwerveDriveKinematics.desaturateWheelSpeeds(desiredStates,
-        DriveConstants.SPEED_CAP_METERS_PER_SECOND);
+        DriveConstants.artificialMaxSpeedMps);
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     rearLeft.setDesiredState(desiredStates[2]);
@@ -197,6 +156,7 @@ public class Drive extends SubsystemBase {
   /** Zeroes the heading of the robot. */
   public void zeroHeading() {
     gyro.reset();
+    questNav.resetPose(new Pose2d());
   }
 
   /**
@@ -214,7 +174,7 @@ public class Drive extends SubsystemBase {
    * @return The turn rate of the robot, in degrees per second
    */
   public double getTurnRate() {
-    return gyro.getRotation3d().getAngle() * (DriveConstants.GYRO_REVERSED ? -1.0 : 1.0);
+    return gyro.getRotation3d().getAngle() * (DriveConstants.gyroReversed ? -1.0 : 1.0);
   }
 
   /**
@@ -225,14 +185,13 @@ public class Drive extends SubsystemBase {
   public ChassisSpeeds getRelativeSpeeds() {
     SwerveModuleState moduleStates[] =
         {frontLeft.getState(), frontRight.getState(), rearLeft.getState(), rearRight.getState()};
-    return DriveConstants.SWERVE_DRIVE_KINEMATICS.toChassisSpeeds(moduleStates);
+    return DriveConstants.swerveKinematics.toChassisSpeeds(moduleStates);
   }
 
-  public void driveRobotRelative(ChassisSpeeds speeds) {
-    drive(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, false);
-  }
-
-  public void logPoseEstimation() {
+  /**
+   * Method to send telemetry for robot pose data to NetworkTables
+   */
+  public void logRobotPose() {
     Pose2d currentPose = getPose();
     double compositePoseData[] =
         {currentPose.getX(), currentPose.getY(), currentPose.getRotation().getRadians()};
@@ -243,22 +202,58 @@ public class Drive extends SubsystemBase {
     SmartDashboard.putNumberArray("Robot pose Data", compositePoseData);
   }
 
-  public static Command drive(
-    Drive driveTrain,
-    DoubleSupplier xSupplier,
-    DoubleSupplier ySupplier,
-    DoubleSupplier rotationSupplier,
-    BooleanSupplier fieldRelative) {
-      return Commands.run(
-        () -> {
-          driveTrain.drive(
-            xSupplier.getAsDouble() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
-            ySupplier.getAsDouble() * DriveConstants.SPEED_CAP_METERS_PER_SECOND,
-            rotationSupplier.getAsDouble() * 3,
-            fieldRelative.getAsBoolean()
-          );
-        },
-        driveTrain
-      );
-    }
+  /**
+   * Method to update SwerveModule states based on given ChassisSpeeds
+   * 
+   * @param speeds ChassisSpeeds to drive robot
+   */
+  public void driveWithChassisSpeeds(ChassisSpeeds speeds) {
+    ChassisSpeeds.discretize(speeds, 0.02);
+    SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.artificialMaxSpeedMps);
+    setModuleStates(moduleStates);
+  }
+
+  /**
+   * Command to drive the robot relative to the field with heading angle
+   * 
+   * @param x Supplies X-value from controller
+   * @param y Supplies Y-value from controller
+   * @param targetHeading Supplies target heading from controller
+   */
+  public Command driveFieldRelativeWithHeading(DoubleSupplier x, DoubleSupplier y,
+      Supplier<Rotation2d> targetHeading) {
+    return driveFieldRelative(x, y, () -> headingController
+        .calculate(getPose().getRotation().getRadians(), targetHeading.get().getRadians()));
+  }
+
+  /**
+   * Command to drive the robot relative to the field
+   * 
+   * @param x Supplies X-value from controller
+   * @param y Supplies Y-value from controller
+   * @param rot Supplies Angular velocity for rotation from controller
+   */
+  public Command driveFieldRelative(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
+    return run(() -> {
+      ChassisSpeeds speeds = ChassisSpeeds.fromFieldRelativeSpeeds(x.getAsDouble(), y.getAsDouble(),
+          rot.getAsDouble(), getPose().getRotation());
+      driveWithChassisSpeeds(speeds);
+    });
+  }
+
+  /**
+   * Command to drive the robot relative to it's current position
+   * 
+   * @param x Supplies X-value from controller
+   * @param y Supplies Y-value from controller
+   * @param rot Supplies Angular velocity for rotation from controller
+   */
+  public Command driveRobotRelative(DoubleSupplier x, DoubleSupplier y, DoubleSupplier rot) {
+    return run(() -> {
+      ChassisSpeeds speeds = new ChassisSpeeds(x.getAsDouble(), y.getAsDouble(), rot.getAsDouble());
+      driveWithChassisSpeeds(speeds);
+    });
+  }
+
 }
