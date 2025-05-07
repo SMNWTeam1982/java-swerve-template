@@ -4,15 +4,15 @@
 
 package frc.robot;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.Constants.OperatorConstants;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.Constants.OperatorConstants;
 
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
@@ -41,7 +41,9 @@ public class Robot extends LoggedRobot {
         String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from
         // AdvantageScope (or prompt the user)
         Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-        Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+        Logger.addDataReceiver(
+            new WPILOGWriter(
+                LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
       }
       Logger.start();
     }
@@ -56,9 +58,8 @@ public class Robot extends LoggedRobot {
    * This function is called every 20 ms, no matter the mode. Use this for items like diagnostics
    * that you want ran during disabled, autonomous, teleoperated and test.
    *
-   * <p>
-   * This runs after the mode specific periodic functions, but before LiveWindow and SmartDashboard
-   * integrated updating.
+   * <p>This runs after the mode specific periodic functions, but before LiveWindow and
+   * SmartDashboard integrated updating.
    */
   @Override
   public void robotPeriodic() {
@@ -79,9 +80,7 @@ public class Robot extends LoggedRobot {
   @Override
   public void disabledPeriodic() {}
 
-  /**
-   * This autonomous runs the autonomous command selected by your {@link RobotContainer} class.
-   */
+  /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
