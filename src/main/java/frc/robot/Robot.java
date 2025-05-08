@@ -42,8 +42,8 @@ public class Robot extends LoggedRobot {
         // AdvantageScope (or prompt the user)
         Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
         Logger.addDataReceiver(
-            new WPILOGWriter(
-                LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+            new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to
+        // a new log
       }
       Logger.start();
     }

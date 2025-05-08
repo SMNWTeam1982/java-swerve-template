@@ -6,7 +6,7 @@ It includes several features to make development work somewhat easier for the te
 
 ## Components
  - AdvantageKit - Advanced logging framework
- - Pathplanner - Comprehensive autonomous 
+ - Pathplanner - Comprehensive autonomous
  - PhotonLib - AprilTag/general vision system
  - QuestNav - Odometry data from Quest 3s
 
