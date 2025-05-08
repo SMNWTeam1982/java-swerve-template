@@ -37,12 +37,12 @@ public class SwerveModule {
   public SwerveModule(int driveMotorID, int turnMotorID, int encoderID) {
     driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless);
     driveMotor.configure(
-        SwerveModuleConstants.driveMotorConfig,
+        SwerveModuleConstants.DRIVE_MOTOR_CONFIG,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
     turnMotor = new SparkMax(turnMotorID, MotorType.kBrushless);
     turnMotor.configure(
-        SwerveModuleConstants.turnMotorConfig,
+        SwerveModuleConstants.TURN_MOTOR_CONFIG,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
@@ -51,14 +51,14 @@ public class SwerveModule {
 
     turnPIDController =
         new PIDController(
-            SwerveModuleConstants.turnProportionalGain,
-            SwerveModuleConstants.turnIntegralGain,
-            SwerveModuleConstants.turnDerivativeGain);
+            SwerveModuleConstants.TURN_PROPORTIONL_GAIN,
+            SwerveModuleConstants.TURN_INTEGRAL_GAIN,
+            SwerveModuleConstants.TURN_DERIVATIVE_GAIN);
 
     driveFeedforward =
         new SimpleMotorFeedforward(
-            SwerveModuleConstants.driveStaticGain,
-            SwerveModuleConstants.driveVelocityGainSecondsPerMeter);
+            SwerveModuleConstants.DRIVE_STATIC_GAIN,
+            SwerveModuleConstants.DRIVE_VELOCITY_GAIN_SECONDS_PER_METER);
 
     turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
@@ -70,7 +70,7 @@ public class SwerveModule {
    */
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
-        driveEncoder.getPosition() * SwerveModuleConstants.positionToMetersMultiplier,
+        driveEncoder.getPosition() * SwerveModuleConstants.POSITION_TO_METERS_MULTIPLIER,
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
 

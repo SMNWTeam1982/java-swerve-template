@@ -34,70 +34,74 @@ public final class Constants {
 
   /** Constants for general configuration of the robot project */
   public static class OperatorConstants {
-    public static final String projectName = "Swerve Template";
-    public static final int driverControllerPort = 0;
-    public static final int operatorControllerPort = 1;
-    public static final boolean enableQuestNav = true;
-    public static final boolean enablePhotonLib = false;
-    public static final boolean isSim = true;
+    public static final String PROJECT_NAME = "Swerve Template";
+    public static final int DRIVER_CONTROLLER_PORT = 0;
+    public static final int OPERATOR_CONTROLLER_PORT = 1;
+    public static final boolean ENABLE_QUESTNAV = true;
+    public static final boolean ENABLE_PHOTONLIB = false;
+    public static final boolean IS_SIM = true;
   }
 
   /** Constants to configure Swerve Modules */
   public static class SwerveModuleConstants {
-    public static final double positionToMetersMultiplier = 0.31927 / 6.75;
-    public static final double rpmToMpsMultiplier = positionToMetersMultiplier / 60;
+    public static final double POSITION_TO_METERS_MULTIPLIER = 0.31927 / 6.75;
+    public static final double RPM_TO_MPS_MULTIPLIER = POSITION_TO_METERS_MULTIPLIER / 60;
 
-    public static final double turnProportionalGain = 0.73;
-    public static final double turnIntegralGain = 0.0;
-    public static final double turnDerivativeGain = 0.01;
+    public static final double TURN_PROPORTIONL_GAIN = 0.73;
+    public static final double TURN_INTEGRAL_GAIN = 0.0;
+    public static final double TURN_DERIVATIVE_GAIN = 0.01;
 
-    public static final double driveStaticGain = 0.05;
-    public static final double driveVelocityGainSecondsPerMeter = 2.87;
+    public static final double DRIVE_STATIC_GAIN = 0.05;
+    public static final double DRIVE_VELOCITY_GAIN_SECONDS_PER_METER = 2.87;
 
-    public static final SparkBaseConfig driveMotorConfig =
+    public static final SparkBaseConfig DRIVE_MOTOR_CONFIG =
         new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-    public static final SparkBaseConfig turnMotorConfig =
+    public static final SparkBaseConfig TURN_MOTOR_CONFIG =
         new SparkMaxConfig().smartCurrentLimit(30).idleMode(SparkBaseConfig.IdleMode.kCoast);
   }
 
   /** Constants to configure Drivetrain */
   public static class DriveConstants {
-    public static final double physicalMaxSpeedMps = 3.8;
+    public static final double PHYSICAL_MAX_MPS = 3.8;
 
-    public static final double artificialMaxSpeedMps = 2.5;
+    public static final double ARTIFICIAL_MAX_MPS = 2.5;
 
-    public static final double drivePeriod = TimedRobot.kDefaultPeriod;
-    public static final boolean gyroReversed = false;
+    public static final double DRIVE_PERIOD = TimedRobot.kDefaultPeriod;
+    public static final boolean GYRO_REVERSED = false;
 
-    public static final double headingPorportionalGain = 1.0;
-    public static final double headingIntegralGain = 0.0;
-    public static final double headingDerivativeGain = 0.0;
+    public static final double HEADING_PROPORTIONAL_GAIN = 1.0;
+    public static final double HEADING_INTEGRAL_GAIN = 0.0;
+    public static final double HEADING_DERIVATIVE_GAIN = 0.0;
 
-    public static final Translation2d frontLeftTranslation = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d frontRightTranslation = new Translation2d(0.2635, -0.2635);
-    public static final Translation2d rearLeftTranslation = new Translation2d(-0.2635, 0.2635);
-    public static final Translation2d rearRightTranslation = new Translation2d(-0.2635, -0.2635);
+    public static final Translation2d FRONT_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
+    public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, -0.2635);
+    public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(-0.2635, 0.2635);
+    public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(-0.2635, -0.2635);
 
     public static final SwerveDriveKinematics swerveKinematics =
         new SwerveDriveKinematics(
-            frontLeftTranslation, frontRightTranslation, rearLeftTranslation, rearRightTranslation);
+            FRONT_LEFT_TRANSLATION,
+            FRONT_RIGHT_TRANSLATION,
+            REAR_LEFT_TRANSLATION,
+            REAR_RIGHT_TRANSLATION);
   }
 
   /** Constants to configure QuestNav and PhotonLib vision sources */
   public static class VisionConstants {
-    public static final String photonFrontCameraName = "limelight-front";
+    public static final String PHOTON_CAMERA_NAME = "limelight-front";
 
-    public static final Matrix<N3, N1> photonLibVisionTrust = VecBuilder.fill(0.5, 0.5, 1);
+    public static final Matrix<N3, N1> PHOTON_CAM_VISION_TRUST = VecBuilder.fill(0.5, 0.5, 1);
 
-    public static final Transform3d frontCameraRelativeToRobot =
+    public static final Transform3d PHOTON_CAM_RELATIVE_TO_ROBOT =
         new Transform3d(
             new Translation3d(
                 Units.inchesToMeters(12.0), Units.inchesToMeters(0.0), Units.inchesToMeters(9.75)),
             new Rotation3d(0.0, 10.0, 0.0));
 
-    public static final Matrix<N3, N1> questNavVisionTrust = VecBuilder.fill(0.02, 0.02, 0.035);
+    public static final Matrix<N3, N1> QUESTNAV_CAM_VISION_TRUST =
+        VecBuilder.fill(0.02, 0.02, 0.035);
 
-    public static final Transform2d questRelativeToRobot =
+    public static final Transform2d QUESTNAV_CAM_RELATIVE_TO_ROBOT =
         new Transform2d(new Translation2d(Units.inchesToMeters(12.0), 0), new Rotation2d(0));
   }
 

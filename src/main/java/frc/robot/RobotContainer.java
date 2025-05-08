@@ -5,14 +5,13 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.swerve.DriveSubsystem;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
  * This class is where the bulk of the robot should be declared. Since Command-based is a
@@ -24,23 +23,22 @@ public class RobotContainer {
   // The robot's subsystems and commands are defined here...
   final DriveSubsystem driveTrain = new DriveSubsystem();
 
-  private final SendableChooser<Command> autoChooser;
+  private final LoggedDashboardChooser<Command> autoChooser;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
   private final CommandXboxController driverController =
-      new CommandXboxController(OperatorConstants.driverControllerPort);
+      new CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
   private final CommandJoystick operatorController =
-      new CommandJoystick(OperatorConstants.operatorControllerPort);
+      new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
 
-    autoChooser = AutoBuilder.buildAutoChooser();
+    autoChooser =
+        new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
     // Configure the trigger bindings
     configureDriverBindings();
     configureOperatorBindings();
-
-    SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
   /**
@@ -69,6 +67,6 @@ public class RobotContainer {
    */
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
-    return autoChooser.getSelected();
+    return autoChooser.get();
   }
 }

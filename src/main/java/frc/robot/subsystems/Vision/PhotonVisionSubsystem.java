@@ -4,10 +4,10 @@ import com.ctre.phoenix6.Utils;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import java.util.List;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
@@ -17,13 +17,13 @@ import org.photonvision.targeting.PhotonPipelineResult;
 public class PhotonVisionSubsystem extends SubsystemBase {
   // Define photon cameras here
   private static final PhotonCamera photonLimelightFront =
-      new PhotonCamera(VisionConstants.photonFrontCameraName);
+      new PhotonCamera(VisionConstants.PHOTON_CAMERA_NAME);
 
   public PhotonPoseEstimator photonPoseEstimator =
       new PhotonPoseEstimator(
           AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
           PoseStrategy.LOWEST_AMBIGUITY,
-          VisionConstants.frontCameraRelativeToRobot);
+          VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT);
 
   private PhotonPipelineResult result;
 
@@ -71,12 +71,9 @@ public class PhotonVisionSubsystem extends SubsystemBase {
   /** Method to send telemetry for photon pose data to NetworkTables */
   private void logPoseEstimation() {
     Pose2d currentPose = getEstRobotPose();
-    double compositePoseData[] = {
-      currentPose.getX(), currentPose.getY(), currentPose.getRotation().getRadians()
-    };
-    SmartDashboard.putNumber("Photon X", compositePoseData[0]);
-    SmartDashboard.putNumber("Photon Y", compositePoseData[1]);
-    SmartDashboard.putNumber("Photon Rotation", compositePoseData[2]);
-    SmartDashboard.putNumberArray("Photon pose Data", compositePoseData);
+    Logger.recordOutput("Photon X", currentPose.getX());
+    Logger.recordOutput("Photon Y", currentPose.getY());
+    Logger.recordOutput("Photon Rotation", currentPose.getRotation().getRadians());
+    Logger.recordOutput("Photon Estimated Pose", currentPose);
   }
 }

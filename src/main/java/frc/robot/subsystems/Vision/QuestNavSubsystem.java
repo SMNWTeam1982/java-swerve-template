@@ -2,10 +2,10 @@ package frc.robot.subsystems.vision;
 
 import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.QuestNav;
+import org.littletonrobotics.junction.Logger;
 
 /** Custom Subsystem for QuestNav that implements several important odometry methods. */
 public class QuestNavSubsystem extends SubsystemBase {
@@ -24,7 +24,9 @@ public class QuestNavSubsystem extends SubsystemBase {
    * @return The robot pose as a Pose2d Object
    */
   public Pose2d getEstRobotPose() {
-    return questNavInstance.getPose().transformBy(VisionConstants.questRelativeToRobot.inverse());
+    return questNavInstance
+        .getPose()
+        .transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT.inverse());
   }
 
   /**
@@ -33,7 +35,7 @@ public class QuestNavSubsystem extends SubsystemBase {
    * @param pose The desired pose as as a Pose2d Object
    */
   public void resetPose(Pose2d pose) {
-    Pose2d questPose = pose.transformBy(VisionConstants.questRelativeToRobot.inverse());
+    Pose2d questPose = pose.transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT.inverse());
     questNavInstance.setPose(questPose);
   }
 
@@ -62,12 +64,9 @@ public class QuestNavSubsystem extends SubsystemBase {
   /** Method to send telemetry for quest pose data to NetworkTables */
   private void logPoseEstimation() {
     Pose2d currentPose = getEstRobotPose();
-    double compositePoseData[] = {
-      currentPose.getX(), currentPose.getY(), currentPose.getRotation().getRadians()
-    };
-    SmartDashboard.putNumber("QuestNav X", compositePoseData[0]);
-    SmartDashboard.putNumber("QuestNav Y", compositePoseData[1]);
-    SmartDashboard.putNumber("QuestNav Rotation", compositePoseData[2]);
-    SmartDashboard.putNumberArray("QuestNav pose Data", compositePoseData);
+    Logger.recordOutput("QuestNav X", currentPose.getX());
+    Logger.recordOutput("QuestNav Y", currentPose.getY());
+    Logger.recordOutput("QuestNav Rotation", currentPose.getRotation().getRadians());
+    Logger.recordOutput("QuestNav Estimated Pose", currentPose);
   }
 }
