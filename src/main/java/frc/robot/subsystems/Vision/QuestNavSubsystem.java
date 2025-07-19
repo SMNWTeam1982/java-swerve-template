@@ -4,17 +4,19 @@ import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
-import frc.robot.QuestNav;
+import gg.questnav.questnav.QuestNav;
 import org.littletonrobotics.junction.Logger;
 
-/** Custom Subsystem for QuestNav that implements several important odometry methods. */
+/**
+ * Subsystem for QuestNav that provides several general use vision APIs in code and provides some
+ * methods to reduce boilerplate
+ */
 public class QuestNavSubsystem extends SubsystemBase {
-  public QuestNav questNavInstance = new QuestNav();
+  public QuestNav quest = new QuestNav();
 
   @Override
   public void periodic() {
-    questNavInstance.cleanupResponses();
-    questNavInstance.processHeartbeat();
+    quest.commandPeriodic();
     logPoseEstimation();
   }
 
@@ -24,9 +26,7 @@ public class QuestNavSubsystem extends SubsystemBase {
    * @return The robot pose as a Pose2d Object
    */
   public Pose2d getEstRobotPose() {
-    return questNavInstance
-        .getPose()
-        .transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT.inverse());
+    return quest.getPose().transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT.inverse());
   }
 
   /**
@@ -35,8 +35,8 @@ public class QuestNavSubsystem extends SubsystemBase {
    * @param pose The desired pose as as a Pose2d Object
    */
   public void resetPose(Pose2d pose) {
-    Pose2d questPose = pose.transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT.inverse());
-    questNavInstance.setPose(questPose);
+    Pose2d questPose = pose.transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT);
+    quest.setPose(questPose);
   }
 
   /**
@@ -45,7 +45,7 @@ public class QuestNavSubsystem extends SubsystemBase {
    * @return The timestamp as a timebase double
    */
   public double getQuestNavTimestamp() {
-    return Utils.fpgaToCurrentTime(questNavInstance.getTimestamp());
+    return Utils.fpgaToCurrentTime(quest.getDataTimestamp());
   }
 
   /**
@@ -54,7 +54,7 @@ public class QuestNavSubsystem extends SubsystemBase {
    * @return true if the Quest is connected and tracking, and false otherwise.
    */
   public boolean isQuestReady() {
-    if (questNavInstance.getConnected() && questNavInstance.getTrackingStatus()) {
+    if (quest.isConnected() && quest.isTracking()) {
       return true;
     } else {
       return false;
