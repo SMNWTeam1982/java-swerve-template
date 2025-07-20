@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.commands.DriveRobotRelative;
 import frc.robot.subsystems.swerve.DriveSubsystem;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
 import frc.robot.subsystems.vision.QuestNavSubsystem;
@@ -80,10 +81,12 @@ public class RobotContainer {
    */
   private void configureDriverBindings() {
     driveTrain.setDefaultCommand(
-        driveTrain.driveRobotRelative(
+        new DriveRobotRelative(
+            driveTrain,
             () -> -deadZone(driverController.getLeftY()) * 2,
             () -> -deadZone(driverController.getLeftX()) * 2,
-            () -> deadZone(driverController.getRightX()) * 3));
+            () -> deadZone(driverController.getRightX()) * 3,
+            driverController.a()));
   }
 
   private void configureOperatorBindings() {}
