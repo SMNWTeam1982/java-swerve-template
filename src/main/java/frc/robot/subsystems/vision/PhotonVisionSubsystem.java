@@ -4,55 +4,50 @@ import com.ctre.phoenix6.Utils;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.VisionConstants;
+import edu.wpi.first.math.geometry.Transform3d;
 import java.util.List;
-import org.littletonrobotics.junction.Logger;
+import java.util.Optional;
+import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 
-/** Custom Subsystem for PhotonVision that implements several important odometry methods */
-public class PhotonVisionSubsystem extends SubsystemBase {
-  // Define photon cameras here
-  private static final PhotonCamera photonLimelightFront =
-      new PhotonCamera(VisionConstants.PHOTON_CAMERA_NAME);
+/** Implements a Vision Subsystem for Photon Vision */
+public class PhotonVisionSubsystem extends VisionSubsystem {
 
-  public PhotonPoseEstimator photonPoseEstimator =
-      new PhotonPoseEstimator(
-          AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
-          PoseStrategy.LOWEST_AMBIGUITY,
-          VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT);
+  private PhotonCamera instanceCamera;
 
-  private PhotonPipelineResult result;
+  public PhotonPoseEstimator photonPoseEstimator;
+
+  /**
+   * Constructs a new Photon Vision Subsystem instance
+   *
+   * @param name The name of the Photon Vision instance
+   */
+  public PhotonVisionSubsystem(String name, Transform3d cameraRelativeToRobot, String cameraName) {
+    super(name);
+    photonPoseEstimator =
+        new PhotonPoseEstimator(
+            AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
+            PoseStrategy.LOWEST_AMBIGUITY,
+            cameraRelativeToRobot);
+    instanceCamera = new PhotonCamera(cameraName);
+  }
 
   @Override
   public void periodic() {
-    List<PhotonPipelineResult> currentResults = photonLimelightFront.getAllUnreadResults();
-    if (!currentResults.isEmpty()) {
-      result = currentResults.get(currentResults.size() - 1);
-    }
-    logPoseEstimation();
+    updatePoseEstimation(getLatestResult());
+    super.periodic();
   }
 
   /**
-   * Gets the estimated pose of the robot based on recent pipeline results
+   * Method that gets the current estimated robot pose based on vision data
    *
-   * @return The robot pose as a Pose2d Object
+   * @return The estimated robot pose as a {@link Pose2d} object
    */
-  public Pose2d getEstRobotPose() {
-    return photonPoseEstimator.update(result).get().estimatedPose.toPose2d();
-    // return new Pose2d();
-  }
-
-  /**
-   * Returns the Camera Timestamp of the current data
-   *
-   * @return The timestamp as a timebase double
-   */
-  public double getPhotonVisionTimestamp() {
-    return Utils.fpgaToCurrentTime(result.getTimestampSeconds());
+  public Pose2d getEstimatedPose() {
+    return updatePoseEstimation(getLatestResult()).get().estimatedPose.toPose2d();
   }
 
   /**
@@ -60,20 +55,46 @@ public class PhotonVisionSubsystem extends SubsystemBase {
    *
    * @return true if the camera is connected and has targets, and false otherwise.
    */
-  public boolean isPhotonReady() {
-    if (photonLimelightFront.isConnected() && result.hasTargets()) {
+  public boolean isReady() {
+    if (instanceCamera.isConnected() && getLatestResult().hasTargets()) {
       return true;
+    }
+    return false;
+  }
+
+  /**
+   * Returns the Camera Timestamp of the current data
+   *
+   * @return The timestamp as a timebase double
+   */
+  public double getTimestamp() {
+    return Utils.fpgaToCurrentTime(getLatestResult().getTimestampSeconds());
+  }
+
+  // Photon Vision specific Methods
+
+  /**
+   * Method that returns the latest pipeline result if it exists
+   *
+   * @return PhotonPipelineResult with latest position
+   */
+  private PhotonPipelineResult getLatestResult() {
+    List<PhotonPipelineResult> currentResults = instanceCamera.getAllUnreadResults();
+    if (!currentResults.isEmpty()) {
+      PhotonPipelineResult result = currentResults.get(currentResults.size() - 1);
+      return result;
     } else {
-      return false;
+      return new PhotonPipelineResult();
     }
   }
 
-  /** Method to send telemetry for photon pose data to NetworkTables */
-  private void logPoseEstimation() {
-    Pose2d currentPose = getEstRobotPose();
-    Logger.recordOutput("Photon X", currentPose.getX());
-    Logger.recordOutput("Photon Y", currentPose.getY());
-    Logger.recordOutput("Photon Rotation", currentPose.getRotation().getRadians());
-    Logger.recordOutput("Photon Estimated Pose", currentPose);
+  /**
+   * Updates the pose estimation based on vision data
+   *
+   * @param latestResult The latest {@link PhotonPipelineResult}
+   * @return Optional {@link EstimatedRobotPose} based on vision data
+   */
+  private Optional<EstimatedRobotPose> updatePoseEstimation(PhotonPipelineResult latestResult) {
+    return photonPoseEstimator.update(latestResult);
   }
 }

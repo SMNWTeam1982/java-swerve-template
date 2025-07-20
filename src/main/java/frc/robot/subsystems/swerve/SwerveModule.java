@@ -4,8 +4,6 @@
 
 package frc.robot.subsystems.swerve;
 
-import org.littletonrobotics.junction.Logger;
-
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
@@ -16,8 +14,8 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.Units;
 import frc.robot.Constants.SwerveModuleConstants;
+import org.littletonrobotics.junction.Logger;
 
 /** Individual Swerve Module for a Swerve Drive drivetrain */
 public class SwerveModule {
@@ -74,7 +72,7 @@ public class SwerveModule {
   public SwerveModulePosition getPosition() {
     return new SwerveModulePosition(
         driveEncoder.getPosition() * SwerveModuleConstants.POSITION_TO_METERS_MULTIPLIER,
-        Rotation2d.fromRadians(turnEncoder.getAbsolutePosition().getValue().in(Units.Radians)));
+        Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
 
   /**
@@ -89,7 +87,7 @@ public class SwerveModule {
     }
 
     Rotation2d encoderRotation =
-        Rotation2d.fromRadians(turnEncoder.getAbsolutePosition().getValue().in(Units.Radians));
+        Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
 
     desiredState.optimize(getState().angle);
 
@@ -137,8 +135,9 @@ public class SwerveModule {
   public SwerveModuleState getState() {
     return new SwerveModuleState(
         driveEncoder.getVelocity(),
-        Rotation2d.fromRadians(turnEncoder.getAbsolutePosition().getValue().in(Units.Radians)));
+        Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
+
   public void stop() {
     turnMotor.set(0);
     driveMotor.set(0);

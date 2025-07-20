@@ -66,7 +66,7 @@ public class DriveSubsystem extends SubsystemBase {
   // Various overload constructor functions for various vision configurations
   // In competetition both are enabled, but for testing, it is useful to have any combination of
   // vision.
-  /** Initialize Drive Subsystem with no vision */
+  /** Initialize Drive Subsystem */
   public DriveSubsystem() {
     zeroHeading();
     SmartDashboard.putData("Field", field);
@@ -80,11 +80,9 @@ public class DriveSubsystem extends SubsystemBase {
    * @param photonInstance Instance of the Photon Vision subsystem to be used in the Drive Subsystem
    */
   public DriveSubsystem(QuestNavSubsystem questInstance, PhotonVisionSubsystem photonInstance) {
-    zeroHeading();
-    SmartDashboard.putData("Field", field);
+    this();
     questNav = questInstance;
     photonVision = photonInstance;
-    configurePathPlanner();
   }
 
   /**
@@ -93,10 +91,8 @@ public class DriveSubsystem extends SubsystemBase {
    * @param questInstance Instance of the QuestNav subsystem to be used in the Drive Subsystem
    */
   public DriveSubsystem(QuestNavSubsystem questInstance) {
-    zeroHeading();
-    SmartDashboard.putData("Field", field);
+    this();
     questNav = questInstance;
-    configurePathPlanner();
   }
 
   /**
@@ -105,10 +101,8 @@ public class DriveSubsystem extends SubsystemBase {
    * @param questInstance Instance of the QuestNav subsystem to be used in the Drive Subsystem
    */
   public DriveSubsystem(PhotonVisionSubsystem photonInstance) {
-    zeroHeading();
-    SmartDashboard.putData("Field", field);
+    this();
     photonVision = photonInstance;
-    configurePathPlanner();
   }
 
   @Override
@@ -123,22 +117,24 @@ public class DriveSubsystem extends SubsystemBase {
           rearRight.getPosition()
         });
     // If QuestNav is enabled and ready, add it's measurements
-    if (OperatorConstants.ENABLE_QUESTNAV && questNav.isQuestReady()) {
-      swervePoseEstimator.addVisionMeasurement(
-          questNav.getEstRobotPose(),
-          questNav.getQuestNavTimestamp(),
-          VisionConstants.QUESTNAV_CAM_VISION_TRUST);
+    if (OperatorConstants.ENABLE_QUESTNAV) {
+      if (questNav.isReady()) {
+        swervePoseEstimator.addVisionMeasurement(
+            questNav.getEstimatedPose(),
+            questNav.getTimestamp(),
+            VisionConstants.QUESTNAV_CAM_VISION_TRUST);
+      }
     }
     // If PhotonVision is enabled and ready, add it's measurements
     if (OperatorConstants.ENABLE_PHOTONLIB) {
-      swervePoseEstimator.addVisionMeasurement(
-          photonVision.getEstRobotPose(),
-          photonVision.getPhotonVisionTimestamp(),
-          VisionConstants.PHOTON_CAM_VISION_TRUST);
+      if (photonVision.isReady()) {
+        swervePoseEstimator.addVisionMeasurement(
+            photonVision.getEstimatedPose(),
+            photonVision.getTimestamp(),
+            VisionConstants.PHOTON_CAM_VISION_TRUST);
+      }
     }
-
-    field.setRobotPose(getPose());
-    logRobotPose();
+    logRobotPose(getEstimatedPose());
   }
 
   /** Method to configure PathPlanner and the AutoBuilder, abstracted for constructor overload */
@@ -147,7 +143,7 @@ public class DriveSubsystem extends SubsystemBase {
     try {
       config = RobotConfig.fromGUISettings();
       AutoBuilder.configure(
-          this::getPose, // Robot pose supplier
+          this::getEstimatedPose, // Robot pose supplier
           this::resetOdometry, // Method to reset odometry (will be called if your auto has a
           // starting pose)
           this::getRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
@@ -189,7 +185,7 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @return The pose as a Pose2d object.
    */
-  public Pose2d getPose() {
+  public Pose2d getEstimatedPose() {
     return swervePoseEstimator.getEstimatedPosition();
   }
 
@@ -241,30 +237,23 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
+   * Gets the current Swerve Module States
+   *
+   * @return Array of {@link SwerveModuleState} objects with the current states
+   */
+  private SwerveModuleState[] getModuleStates() {
+    return new SwerveModuleState[] {
+      frontLeft.getState(), frontRight.getState(), rearLeft.getState(), rearRight.getState()
+    };
+  }
+
+  /**
    * Returns the robot relative speed as ChassisSpeeds
    *
    * @return Robot relative ChassisSpeeds
    */
   public ChassisSpeeds getRelativeSpeeds() {
-    SwerveModuleState moduleStates[] = {
-      frontLeft.getState(), frontRight.getState(), rearLeft.getState(), rearRight.getState()
-    };
-    return DriveConstants.swerveKinematics.toChassisSpeeds(moduleStates);
-  }
-
-  /** Method to send telemetry for robot pose data to NetworkTables */
-  public void logRobotPose() {
-    Pose2d estimatedPose = getPose();
-    SwerveModuleState[] currentStates =
-        new SwerveModuleState[] {
-          frontLeft.getState(), frontRight.getState(), rearLeft.getState(), rearRight.getState()
-        };
-    field.setRobotPose(estimatedPose);
-    Logger.recordOutput("Robot X", estimatedPose.getX());
-    Logger.recordOutput("Robot Y", estimatedPose.getY());
-    Logger.recordOutput("Robot Rotation", estimatedPose.getRotation().getRadians());
-    Logger.recordOutput("Robot Pose", estimatedPose);
-    Logger.recordOutput("Swerve Module States", currentStates);
+    return DriveConstants.swerveKinematics.toChassisSpeeds(getModuleStates());
   }
 
   /**
@@ -273,6 +262,7 @@ public class DriveSubsystem extends SubsystemBase {
    * @param speeds ChassisSpeeds to drive robot
    */
   public void driveWithChassisSpeeds(ChassisSpeeds speeds) {
+    Logger.recordOutput("ChassisSpeeds Object", speeds);
     ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
     SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
@@ -293,7 +283,7 @@ public class DriveSubsystem extends SubsystemBase {
         y,
         () ->
             headingController.calculate(
-                getPose().getRotation().getRadians(), targetHeading.get().getRadians()));
+                getEstimatedPose().getRotation().getRadians(), targetHeading.get().getRadians()));
   }
 
   /**
@@ -308,7 +298,10 @@ public class DriveSubsystem extends SubsystemBase {
         () -> {
           ChassisSpeeds speeds =
               ChassisSpeeds.fromFieldRelativeSpeeds(
-                  x.getAsDouble(), y.getAsDouble(), rot.getAsDouble(), getPose().getRotation());
+                  x.getAsDouble(),
+                  y.getAsDouble(),
+                  rot.getAsDouble(),
+                  getEstimatedPose().getRotation());
           driveWithChassisSpeeds(speeds);
         });
   }
@@ -328,5 +321,15 @@ public class DriveSubsystem extends SubsystemBase {
               new ChassisSpeeds(x.getAsDouble(), y.getAsDouble(), rot.getAsDouble());
           driveWithChassisSpeeds(speeds);
         });
+  }
+
+  /** Method to send telemetry for robot pose data to NetworkTables */
+  public void logRobotPose(Pose2d estimatedPose) {
+    field.setRobotPose(estimatedPose);
+    Logger.recordOutput("Robot X", estimatedPose.getX());
+    Logger.recordOutput("Robot Y", estimatedPose.getY());
+    Logger.recordOutput("Robot Rotation", estimatedPose.getRotation().getRadians());
+    Logger.recordOutput("Robot Pose", estimatedPose);
+    Logger.recordOutput("Swerve Module States", getModuleStates());
   }
 }

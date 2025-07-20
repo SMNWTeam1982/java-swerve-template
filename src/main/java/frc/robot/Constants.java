@@ -37,7 +37,7 @@ public final class Constants {
     public static final String PROJECT_NAME = "Swerve Template";
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
-    public static final boolean ENABLE_QUESTNAV = false;
+    public static final boolean ENABLE_QUESTNAV = true;
     public static final boolean ENABLE_PHOTONLIB = false;
     public static final boolean REPLAY_LOGS = false;
   }
