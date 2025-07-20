@@ -7,8 +7,8 @@ package frc.robot.subsystems.swerve;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -17,10 +17,13 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.util.sendable.Sendable;
+import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
@@ -37,7 +40,11 @@ public class DriveSubsystem extends SubsystemBase {
 
   private final Pigeon2 gyro = new Pigeon2(0);
 
-  private Field2d field = new Field2d();
+  private Field2d teleopField = new Field2d();
+  private Field2d autoField = new Field2d();
+  private Pose2d autoCurrentPose;
+  private Pose2d autoTargetPose;
+  private Pose2d[] autoTrajectory;
 
   private QuestNavSubsystem questNav;
   private PhotonVisionSubsystem photonVision;
@@ -66,46 +73,38 @@ public class DriveSubsystem extends SubsystemBase {
   /** Initialize Drive Subsystem */
   public DriveSubsystem() {
     zeroHeading();
-    SmartDashboard.putData("Field", field);
-    RobotConfig config;
-    try {
-      config = RobotConfig.fromGUISettings();
-      AutoBuilder.configure(
-          this::getEstimatedPose, // Robot pose supplier
-          this::setEstimatedPose, // Method to reset odometry (will be called if your auto has a
-          // starting pose)
-          this::getRelativeSpeeds, // ChassisSpeeds supplier. MUST BE ROBOT RELATIVE
-          (speeds) -> driveWithChassisSpeeds(speeds), // Method that will drive the robot
-          // given ROBOT RELATIVE
-          // ChassisSpeeds. Also optionally
-          // outputs individual
-          // module feedforwards
-          new PPHolonomicDriveController( // PPHolonomicController is the built in path following
-              // controller for
-              // holonomic
-              // drive trains
-              new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-              new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
-              ),
-          config, // The robot configuration
-          () -> {
-            // Boolean supplier that controls when the path will be mirrored for the red
-            // alliance
-            // This will flip the path being followed to the red side of the field.
-            // THE ORIGIN WILL REMAIN ON THE BLUE SIDE
+    SmartDashboard.putData("Teleoperated Field", teleopField);
+    SmartDashboard.putData("Autonomous Field", autoField);
+    SmartDashboard.putData(
+        "Swerve Drive",
+        new Sendable() {
+          @Override
+          public void initSendable(SendableBuilder builder) {
+            builder.setSmartDashboardType("SwerveDrive");
+            builder.addDoubleProperty(
+                "Front Left Angle", () -> frontLeft.getState().angle.getRadians(), null);
+            builder.addDoubleProperty(
+                "Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond, null);
 
-            var alliance = DriverStation.getAlliance();
-            if (alliance.isPresent()) {
-              return alliance.get() == DriverStation.Alliance.Red;
-            }
-            return false;
-          },
-          this // Reference to this subsystem to set requirements
-          );
-    } catch (Exception e) {
-      // Handle exception as needed
-      e.printStackTrace();
-    }
+            builder.addDoubleProperty(
+                "Front Right Angle", () -> frontRight.getState().angle.getRadians(), null);
+            builder.addDoubleProperty(
+                "Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond, null);
+
+            builder.addDoubleProperty(
+                "Back Left Angle", () -> rearLeft.getState().angle.getRadians(), null);
+            builder.addDoubleProperty(
+                "Back Left Velocity", () -> rearLeft.getState().speedMetersPerSecond, null);
+
+            builder.addDoubleProperty(
+                "Back Right Angle", () -> rearRight.getState().angle.getRadians(), null);
+            builder.addDoubleProperty(
+                "Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond, null);
+
+            builder.addDoubleProperty("Robot Angle", () -> getHeading().getRadians(), null);
+          }
+        });
+    configurePathPlanner();
   }
 
   /**
@@ -170,6 +169,47 @@ public class DriveSubsystem extends SubsystemBase {
       }
     }
     logRobotPose(getEstimatedPose());
+  }
+
+  /** Init method for configuring PathPlanner to improve readability in constructor */
+  public void configurePathPlanner() {
+    // Log pathplanner poses and trajectories to custom Field2d object for visualization
+    PathPlannerLogging.setLogCurrentPoseCallback(
+        (pose) -> {
+          autoField.setRobotPose(pose);
+          autoCurrentPose = pose;
+        });
+    PathPlannerLogging.setLogTargetPoseCallback(
+        (pose) -> {
+          autoField.getObject("Target").setPose(pose);
+          autoTargetPose = pose;
+        });
+    PathPlannerLogging.setLogActivePathCallback(
+        (poseList) -> {
+          Pose2d[] poses = poseList.toArray(new Pose2d[poseList.size()]);
+          if (poses.length != 0) {
+            autoField.getObject("trajectory").setPoses(poses);
+            autoTrajectory = poses;
+          }
+        });
+    AutoBuilder.configure(
+        this::getEstimatedPose,
+        this::setEstimatedPose,
+        this::getRelativeSpeeds,
+        (speeds) -> driveWithChassisSpeeds(speeds),
+        new PPHolonomicDriveController(
+            new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
+            new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            ),
+        AutoConstants.PATHPLANNER_CONFIG,
+        () -> {
+          var alliance = DriverStation.getAlliance();
+          if (alliance.isPresent()) {
+            return alliance.get() == DriverStation.Alliance.Red;
+          }
+          return false;
+        },
+        this);
   }
 
   /**
@@ -271,14 +311,25 @@ public class DriveSubsystem extends SubsystemBase {
     return DriveConstants.swerveKinematics.toChassisSpeeds(getModuleStates());
   }
 
+  private double getLinearVelocity() {
+    ChassisSpeeds relativeSpeeds = getRelativeSpeeds();
+    return Math.hypot(relativeSpeeds.vxMetersPerSecond, relativeSpeeds.vyMetersPerSecond);
+  }
+
   /** Method to send telemetry for robot pose data to NetworkTables */
   public void logRobotPose(Pose2d estimatedPose) {
-    field.setRobotPose(estimatedPose);
-    Logger.recordOutput("Estimated Robot X", estimatedPose.getX());
-    Logger.recordOutput("Estimated Robot Y", estimatedPose.getY());
-    Logger.recordOutput("Estimated Rotation", estimatedPose.getRotation().getRadians());
-    Logger.recordOutput("Estimated Robot Pose", estimatedPose);
-    Logger.recordOutput("Robot Heading", getHeading());
-    Logger.recordOutput("Swerve Module States", getModuleStates());
+    teleopField.setRobotPose(estimatedPose);
+    if (autoTrajectory != null) {
+      Logger.recordOutput("Drive/Auto/Current Pose", autoCurrentPose);
+      Logger.recordOutput("Drive/Auto/Target Pose", autoTargetPose);
+      Logger.recordOutput("Drive/Auto/Target Trajectory", autoTrajectory);
+    }
+    Logger.recordOutput("Drive/Estimated Robot X", estimatedPose.getX());
+    Logger.recordOutput("Drive/Estimated Robot Y", estimatedPose.getY());
+    Logger.recordOutput("Drive/Estimated Rotation", estimatedPose.getRotation().getRadians());
+    Logger.recordOutput("Drive/Estimated Robot Pose", estimatedPose);
+    Logger.recordOutput("Drive/Robot Heading", getHeading());
+    Logger.recordOutput("Drive/Swerve Module States", getModuleStates());
+    Logger.recordOutput("Drive/Linear Velocity", getLinearVelocity());
   }
 }

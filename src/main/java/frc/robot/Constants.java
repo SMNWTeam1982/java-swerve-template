@@ -4,6 +4,11 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Kilogram;
+import static edu.wpi.first.units.Units.KilogramSquareMeters;
+
+import com.pathplanner.lib.config.ModuleConfig;
+import com.pathplanner.lib.config.RobotConfig;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.Matrix;
@@ -17,7 +22,10 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.wpilibj.TimedRobot;
 
 /**
@@ -84,6 +92,22 @@ public final class Constants {
             FRONT_RIGHT_TRANSLATION,
             REAR_LEFT_TRANSLATION,
             REAR_RIGHT_TRANSLATION);
+  }
+
+  public static class AutoConstants {
+    public static final ModuleConfig MODULE_CONFIG =
+        new ModuleConfig(0.048, DriveConstants.ARTIFICIAL_MAX_MPS, 1.200, DCMotor.getNEO(1), 50, 1);
+    public static final Translation2d[] MODULE_OFFSETS =
+        new Translation2d[] {
+          DriveConstants.FRONT_LEFT_TRANSLATION,
+          DriveConstants.FRONT_RIGHT_TRANSLATION,
+          DriveConstants.REAR_LEFT_TRANSLATION,
+          DriveConstants.REAR_RIGHT_TRANSLATION
+        };
+    public static final Mass ROBOT_MASS = Kilogram.of(44.49741);
+    public static final MomentOfInertia ROBOT_MOMENT_OF_INERTIA = KilogramSquareMeters.of(36.038);
+    public static final RobotConfig PATHPLANNER_CONFIG =
+        new RobotConfig(ROBOT_MASS, ROBOT_MOMENT_OF_INERTIA, MODULE_CONFIG, MODULE_OFFSETS);
   }
 
   /** Constants to configure QuestNav and PhotonLib vision sources */

@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NavtoReef"
+            "pathName": "NavToReef"
           }
         },
         {
@@ -19,7 +19,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "NavtoStation"
+            "pathName": "NavToStation"
           }
         }
       ]
