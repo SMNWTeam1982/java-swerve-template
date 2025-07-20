@@ -42,9 +42,6 @@ public class DriveSubsystem extends SubsystemBase {
 
   private Field2d teleopField = new Field2d();
   private Field2d autoField = new Field2d();
-  private Pose2d autoCurrentPose;
-  private Pose2d autoTargetPose;
-  private Pose2d[] autoTrajectory;
 
   private QuestNavSubsystem questNav;
   private PhotonVisionSubsystem photonVision;
@@ -174,22 +171,17 @@ public class DriveSubsystem extends SubsystemBase {
   /** Init method for configuring PathPlanner to improve readability in constructor */
   public void configurePathPlanner() {
     // Log pathplanner poses and trajectories to custom Field2d object for visualization
-    PathPlannerLogging.setLogCurrentPoseCallback(
-        (pose) -> {
-          autoField.setRobotPose(pose);
-          autoCurrentPose = pose;
-        });
     PathPlannerLogging.setLogTargetPoseCallback(
         (pose) -> {
           autoField.getObject("Target").setPose(pose);
-          autoTargetPose = pose;
+          Logger.recordOutput("Drive/Auto/TargetPose", pose);
         });
     PathPlannerLogging.setLogActivePathCallback(
         (poseList) -> {
           Pose2d[] poses = poseList.toArray(new Pose2d[poseList.size()]);
           if (poses.length != 0) {
             autoField.getObject("trajectory").setPoses(poses);
-            autoTrajectory = poses;
+            Logger.recordOutput("Drive/Auto/Trajectory", poses);
           }
         });
     AutoBuilder.configure(
@@ -319,11 +311,7 @@ public class DriveSubsystem extends SubsystemBase {
   /** Method to send telemetry for robot pose data to NetworkTables */
   public void logRobotPose(Pose2d estimatedPose) {
     teleopField.setRobotPose(estimatedPose);
-    if (autoTrajectory != null) {
-      Logger.recordOutput("Drive/Auto/Current Pose", autoCurrentPose);
-      Logger.recordOutput("Drive/Auto/Target Pose", autoTargetPose);
-      Logger.recordOutput("Drive/Auto/Target Trajectory", autoTrajectory);
-    }
+    autoField.setRobotPose(estimatedPose);
     Logger.recordOutput("Drive/Estimated Robot X", estimatedPose.getX());
     Logger.recordOutput("Drive/Estimated Robot Y", estimatedPose.getY());
     Logger.recordOutput("Drive/Estimated Rotation", estimatedPose.getRotation().getRadians());
