@@ -99,7 +99,7 @@ public class SwerveModule {
       driveOutput = 12.0;
     }
     if (driveOutput < -12.0) {
-      driveOutput = 12.0;
+      driveOutput = -12.0;
     }
 
     double turnOutput =

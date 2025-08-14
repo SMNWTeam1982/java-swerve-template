@@ -1,17 +1,15 @@
 package frc.robot.subsystems.vision;
 
-import com.ctre.phoenix6.Utils;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import java.util.List;
+import frc.robot.Constants;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
-import org.photonvision.targeting.PhotonPipelineResult;
 
 /** Implements a Vision Subsystem for Photon Vision */
 public class PhotonVisionSubsystem extends VisionSubsystem {
@@ -25,76 +23,44 @@ public class PhotonVisionSubsystem extends VisionSubsystem {
    *
    * @param name The name of the Photon Vision instance
    */
-  public PhotonVisionSubsystem(String name, Transform3d cameraRelativeToRobot, String cameraName) {
+  public PhotonVisionSubsystem(
+    String name, 
+    Transform3d cameraRelativeToRobot, 
+    String cameraName
+  ) {
     super(name);
-    photonPoseEstimator =
-        new PhotonPoseEstimator(
-            AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
-            PoseStrategy.LOWEST_AMBIGUITY,
-            cameraRelativeToRobot);
+    photonPoseEstimator = new PhotonPoseEstimator(
+      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
+      PoseStrategy.LOWEST_AMBIGUITY,
+      cameraRelativeToRobot
+    );
     instanceCamera = new PhotonCamera(cameraName);
   }
 
   @Override
-  public void periodic() {
-    updatePoseEstimation(getLatestResult());
-    super.periodic();
-  }
+  protected Optional<VisionData> getVisionResult(){
+    Optional<EstimatedRobotPose> lastEstimatedPose = Optional.empty();
 
-  /**
-   * Method that gets the current estimated robot pose based on vision data
-   *
-   * @return The estimated robot pose as a {@link Pose2d} object
-   */
-  public Pose2d getEstimatedPose() {
-    return updatePoseEstimation(getLatestResult()).get().estimatedPose.toPose2d();
-  }
+    for (var result : instanceCamera.getAllUnreadResults()){
+      lastEstimatedPose = photonPoseEstimator.update(result);
+    } // if getAllUnreadResults() is empty then lastEstimatedPose will be Optional.empty()
+    // this also accounts for results that have data but are surrounded by results without data
 
-  /**
-   * Method to determine if Photon is ready
-   *
-   * @return true if the camera is connected and has targets, and false otherwise.
-   */
-  public boolean isReady() {
-    if (instanceCamera.isConnected() && getLatestResult().hasTargets()) {
-      return true;
+    if (lastEstimatedPose.isEmpty()){
+      return Optional.empty();
     }
-    return false;
+
+    EstimatedRobotPose estimatedPose = lastEstimatedPose.get();
+
+    return Optional.of(
+      new VisionData(
+        estimatedPose.estimatedPose.toPose2d(),
+        estimatedPose.timestampSeconds,
+        Constants.VisionConstants.PHOTON_CAM_VISION_TRUST // we should calculate this the same way photonVision does in their example code
+      )
+    );
   }
 
-  /**
-   * Returns the Camera Timestamp of the current data
-   *
-   * @return The timestamp as a timebase double
-   */
-  public double getTimestamp() {
-    return Utils.fpgaToCurrentTime(getLatestResult().getTimestampSeconds());
-  }
-
-  // Photon Vision specific Methods
-
-  /**
-   * Method that returns the latest pipeline result if it exists
-   *
-   * @return PhotonPipelineResult with latest position
-   */
-  private PhotonPipelineResult getLatestResult() {
-    List<PhotonPipelineResult> currentResults = instanceCamera.getAllUnreadResults();
-    if (!currentResults.isEmpty()) {
-      PhotonPipelineResult result = currentResults.get(currentResults.size() - 1);
-      return result;
-    } else {
-      return new PhotonPipelineResult();
-    }
-  }
-
-  /**
-   * Updates the pose estimation based on vision data
-   *
-   * @param latestResult The latest {@link PhotonPipelineResult}
-   * @return Optional {@link EstimatedRobotPose} based on vision data
-   */
-  private Optional<EstimatedRobotPose> updatePoseEstimation(PhotonPipelineResult latestResult) {
-    return photonPoseEstimator.update(latestResult);
-  }
+  @Override
+  public void resetPose(Pose2d newPose){} // this doesn't apply to photonvision
 }

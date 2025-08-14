@@ -1,16 +1,25 @@
 package frc.robot.subsystems.vision;
 
+import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 /**
  * Abstract class for the implementation of a generic Vision Subsystem providing several APIs used
  * in pose estimation
+ * 
+ * another purpose this class serves is to prevent vision results from getting fetched multiple times per loop
  */
 public abstract class VisionSubsystem extends SubsystemBase {
 
-  private String SubsystemName;
+  private VisionData lastVisionData;
+  private boolean isDataFresh = false;
+
+  private final String name;
 
   /**
    * Constructs a generic Vision Subsystem object
@@ -18,44 +27,63 @@ public abstract class VisionSubsystem extends SubsystemBase {
    * @param name The name of the subsystem for logging
    */
   public VisionSubsystem(String name) {
-    SubsystemName = name;
+    this.name = name;
   }
 
   @Override
   public void periodic() {
-    logPoseEstimation(getEstimatedPose());
+    var visionResult = getVisionResult();
+    if (visionResult.isPresent()){
+      isDataFresh = true;
+      lastVisionData = visionResult.get();
+      logPoseEstimation(lastVisionData.pose);
+    } else {
+      isDataFresh = false;
+    }
+  }
+
+  public VisionData getLastVisionData(){
+    return lastVisionData;
   }
 
   /**
-   * Method that gets the current estimated robot pose based on vision data
-   *
-   * @return The estimated robot pose as a {@link Pose2d} object
+   * it is safe to call this multiple times
    */
-  public abstract Pose2d getEstimatedPose();
+  public Pose2d getLastPose(){
+    return lastVisionData.pose;
+  }
 
   /**
-   * Method that determines if the vision subsystem is ready
-   *
-   * @return True if the subsystem is ready and tracking, false otherwise
+   * @return timestamp with the same epoch as the FPGA timestamp
    */
-  public abstract boolean isReady();
+  public double getLastTimestamp(){
+    return lastVisionData.timestamp;
+  };
+
+  public Matrix<N3, N1> getLastDataStandardDeviations(){
+    return lastVisionData.standardDeviations;
+  }
 
   /**
-   * Method providing the timestamp of the current pose estimate
-   *
-   * @return FPGA timebase formatted timestamp in seconds
+   * @return if the vision sample is new this loop
    */
-  public abstract double getTimestamp();
+  public boolean isDataFresh(){
+    return isDataFresh;
+  }
 
   /**
-   * Method to log the current estimated pose from the subsystem
-   *
-   * @param estimatedPose The current estimated pose as a {@link Pose2d}
+   * it is NOT safe to call this multiple times, only call it once per periodic loop
+   * if the vision system being used cannot get its position this will return None
+   * the optional will contain the pose and the timestamp in seconds
    */
+  protected abstract Optional<VisionData> getVisionResult();
+
+  public abstract void resetPose(Pose2d newPose);
+
   private void logPoseEstimation(Pose2d estimatedPose) {
-    Logger.recordOutput(SubsystemName + "X Position", estimatedPose.getX());
-    Logger.recordOutput(SubsystemName + "Y Position", estimatedPose.getY());
-    Logger.recordOutput(SubsystemName + "Rotation", estimatedPose.getRotation().getRadians());
-    Logger.recordOutput(SubsystemName + "Estimated Pose", estimatedPose);
+    Logger.recordOutput(name + "X Position", estimatedPose.getX());
+    Logger.recordOutput(name + "Y Position", estimatedPose.getY());
+    Logger.recordOutput(name + "Rotation", estimatedPose.getRotation().getRadians());
+    Logger.recordOutput(name + "Estimated Pose", estimatedPose);
   }
 }

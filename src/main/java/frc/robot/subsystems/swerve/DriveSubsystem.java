@@ -22,6 +22,7 @@ import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
@@ -29,6 +30,10 @@ import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
 import frc.robot.subsystems.vision.QuestNavSubsystem;
+import frc.robot.subsystems.vision.VisionData;
+import java.util.function.BooleanSupplier;
+import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 /** Command-Based Drivetrain subsytem for Swerve Drive */
@@ -43,15 +48,14 @@ public class DriveSubsystem extends SubsystemBase {
   private Field2d teleopField = new Field2d();
   private Field2d autoField = new Field2d();
 
-  private QuestNavSubsystem questNav;
-  private PhotonVisionSubsystem photonVision;
+  private final Supplier<VisionData> visionDataGetter;
+  private final BooleanSupplier visionFreshnessGetter;
 
-  private final SwerveDrivePoseEstimator swervePoseEstimator =
-      new SwerveDrivePoseEstimator(
-          DriveConstants.swerveKinematics,
-          getHeading(),
-          new SwerveModulePosition[] {
-            frontLeft.getPosition(),
+  private final SwerveDrivePoseEstimator swervePoseEstimator = new SwerveDrivePoseEstimator(
+    DriveConstants.swerveKinematics,
+    gyro.getRotation2d(),
+    new SwerveModulePosition[] {
+      frontLeft.getPosition(),
             frontRight.getPosition(),
             rearLeft.getPosition(),
             rearRight.getPosition()
@@ -68,7 +72,12 @@ public class DriveSubsystem extends SubsystemBase {
   // In competetition both are enabled, but for testing, it is useful to have any combination of
   // vision subsystems enabled.
   /** Initialize Drive Subsystem */
-  public DriveSubsystem() {
+  public DriveSubsystem(
+    Supplier<VisionData> visionDataGetter,
+    BooleanSupplier visionFreshnessGetter
+  ) {
+    this.visionDataGetter = visionDataGetter;
+    this.visionFreshnessGetter = visionFreshnessGetter;
     zeroHeading();
     SmartDashboard.putData("Teleoperated Field", teleopField);
     SmartDashboard.putData("Autonomous Field", autoField);
@@ -104,67 +113,28 @@ public class DriveSubsystem extends SubsystemBase {
     configurePathPlanner();
   }
 
-  /**
-   * Initialize Drive Subsystem with QuestNav and PhotonVision
-   *
-   * @param questInstance Instance of the QuestNav subsystem to be used in the Drive Subsystem
-   * @param photonInstance Instance of the Photon Vision subsystem to be used in the Drive Subsystem
-   */
-  public DriveSubsystem(QuestNavSubsystem questInstance, PhotonVisionSubsystem photonInstance) {
-    this();
-    questNav = questInstance;
-    photonVision = photonInstance;
-  }
-
-  /**
-   * Initialize Drive Subsystem with QuestNav only
-   *
-   * @param questInstance Instance of the QuestNav subsystem to be used in the Drive Subsystem
-   */
-  public DriveSubsystem(QuestNavSubsystem questInstance) {
-    this();
-    questNav = questInstance;
-  }
-
-  /**
-   * Initialize Drive Subsystem with PhotonVision only
-   *
-   * @param questInstance Instance of the QuestNav subsystem to be used in the Drive Subsystem
-   */
-  public DriveSubsystem(PhotonVisionSubsystem photonInstance) {
-    this();
-    photonVision = photonInstance;
-  }
-
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
     swervePoseEstimator.update(
-        getHeading(),
-        new SwerveModulePosition[] {
-          frontLeft.getPosition(),
-          frontRight.getPosition(),
-          rearLeft.getPosition(),
-          rearRight.getPosition()
-        });
-    // If QuestNav is enabled and ready, add it's measurements
-    if (OperatorConstants.ENABLE_QUESTNAV) {
-      if (questNav.isReady()) {
-        swervePoseEstimator.addVisionMeasurement(
-            questNav.getEstimatedPose(),
-            questNav.getTimestamp(),
-            VisionConstants.QUESTNAV_CAM_VISION_TRUST);
+      getHeading(),
+      new SwerveModulePosition[] {
+        frontLeft.getPosition(),
+        frontRight.getPosition(),
+        rearLeft.getPosition(),
+        rearRight.getPosition()
       }
+    );
+
+    if (visionFreshnessGetter.getAsBoolean()){
+      VisionData lastVisionData = visionDataGetter.get();
+      swervePoseEstimator.addVisionMeasurement(
+        lastVisionData.pose,
+        lastVisionData.timestamp,
+        lastVisionData.standardDeviations
+      );
     }
-    // If PhotonVision is enabled and ready, add it's measurements
-    if (OperatorConstants.ENABLE_PHOTONLIB) {
-      if (photonVision.isReady()) {
-        swervePoseEstimator.addVisionMeasurement(
-            photonVision.getEstimatedPose(),
-            photonVision.getTimestamp(),
-            VisionConstants.PHOTON_CAM_VISION_TRUST);
-      }
-    }
+    
     logRobotPose(getEstimatedPose());
   }
 
@@ -206,19 +176,25 @@ public class DriveSubsystem extends SubsystemBase {
 
   /**
    * Resets the odometry to the specified pose.
+   * does not affect vision
    *
    * @param pose The pose to which to set the odometry.
    */
-  public void setEstimatedPose(Pose2d pose) {
-    swervePoseEstimator.resetPosition(
-        getHeading(),
-        new SwerveModulePosition[] {
-          frontLeft.getPosition(),
-          frontRight.getPosition(),
-          rearLeft.getPosition(),
-          rearRight.getPosition()
-        },
-        pose);
+  public Command setEstimatedPose(Pose2d pose) {
+    return runOnce(
+      () -> {
+        swervePoseEstimator.resetPosition(
+          gyro.getRotation2d(),
+          new SwerveModulePosition[] {
+            frontLeft.getPosition(),
+            frontRight.getPosition(),
+            rearLeft.getPosition(),
+            rearRight.getPosition()
+          },
+          pose
+        );
+      }
+    )
   }
 
   /**
@@ -226,7 +202,7 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @param desiredStates The desired SwerveModule states as an Array of SwerveModuleStates
    */
-  public void setModuleStates(SwerveModuleState[] desiredStates) {
+  private void setModuleStates(SwerveModuleState[] desiredStates) {
     frontLeft.setDesiredState(desiredStates[0]);
     frontRight.setDesiredState(desiredStates[1]);
     rearLeft.setDesiredState(desiredStates[2]);
@@ -238,20 +214,33 @@ public class DriveSubsystem extends SubsystemBase {
    *
    * @param speeds ChassisSpeeds to drive robot
    */
-  public void driveWithChassisSpeeds(ChassisSpeeds speeds) {
-    ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
-    SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
-    setModuleStates(moduleStates);
+  public Command driveWithChassisSpeeds(ChassisSpeeds speeds) {
+    return run(
+      () -> {
+        ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
+        SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
+        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
+        setModuleStates(moduleStates);
+      }
+    );
   }
 
-  /** Zeroes the heading of the robot. */
-  public void zeroHeading() {
-    gyro.reset();
-    swervePoseEstimator.resetPose(new Pose2d());
-    if (OperatorConstants.ENABLE_QUESTNAV) {
-      questNav.resetPose(new Pose2d());
-    }
+  /** Zeroes the heading of the pose estimator, vision not affected */
+  public Command zeroHeading() {
+    return runOnce(
+      () -> {
+        swervePoseEstimator.resetRotation(new Rotation2d());
+      }
+    );
+  }
+
+  /** Returns the heading from getEstimatedPose() */
+  public Rotation2d getHeading() {
+    return getEstimatedPose().getRotation();
+  }
+
+  public Pose2d getEstimatedPose() {
+    return swervePoseEstimator.getEstimatedPosition();
   }
 
   /**
@@ -263,24 +252,6 @@ public class DriveSubsystem extends SubsystemBase {
   public double calculateHeading(Rotation2d targetHeading) {
     return headingController.calculate(
         getEstimatedPose().getRotation().getRadians(), targetHeading.getRadians());
-  }
-
-  /**
-   * Returns the heading of the robot.
-   *
-   * @return the robot's heading represented as a Rotation2d
-   */
-  public Rotation2d getHeading() {
-    return gyro.getRotation2d();
-  }
-
-  /**
-   * Returns the currently-estimated pose of the robot.
-   *
-   * @return The pose as a Pose2d object.
-   */
-  public Pose2d getEstimatedPose() {
-    return swervePoseEstimator.getEstimatedPosition();
   }
 
   /**
