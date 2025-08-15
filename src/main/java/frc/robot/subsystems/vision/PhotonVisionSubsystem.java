@@ -4,6 +4,7 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
@@ -18,23 +19,21 @@ public class PhotonVisionSubsystem extends VisionSubsystem {
 
   public PhotonPoseEstimator photonPoseEstimator;
 
-  /**
-   * Constructs a new Photon Vision Subsystem instance
-   *
-   * @param name The name of the Photon Vision instance
-   */
   public PhotonVisionSubsystem(
-    String name, 
     Transform3d cameraRelativeToRobot, 
     String cameraName
   ) {
-    super(name);
     photonPoseEstimator = new PhotonPoseEstimator(
       AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
       PoseStrategy.LOWEST_AMBIGUITY,
       cameraRelativeToRobot
     );
     instanceCamera = new PhotonCamera(cameraName);
+  }
+
+  @Override
+  public String getName(){
+    return "photon vision";
   }
 
   @Override
@@ -62,5 +61,12 @@ public class PhotonVisionSubsystem extends VisionSubsystem {
   }
 
   @Override
-  public void resetPose(Pose2d newPose){} // this doesn't apply to photonvision
+  public Command resetPose(Pose2d newPose){
+    return runOnce(() -> {});
+  } // this doesn't apply to photonvision
+
+  @Override
+  public Command zeroHeading(){
+    return runOnce(() -> {});
+  }
 }

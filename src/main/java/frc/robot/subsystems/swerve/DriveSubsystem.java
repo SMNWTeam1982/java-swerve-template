@@ -3,7 +3,6 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.subsystems.swerve;
-
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -17,6 +16,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.units.measure.AngularVelocity;
+import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -24,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
@@ -40,9 +42,16 @@ import org.littletonrobotics.junction.Logger;
 public class DriveSubsystem extends SubsystemBase {
   private final SwerveModule frontLeft = new SwerveModule(7, 8, 4);
   private final SwerveModule frontRight = new SwerveModule(1, 2, 3);
-  private final SwerveModule rearLeft = new SwerveModule(5, 4, 1);
-  private final SwerveModule rearRight = new SwerveModule(3, 6, 2);
+  private final SwerveModule backLeft = new SwerveModule(5, 4, 1);
+  private final SwerveModule backRight = new SwerveModule(3, 6, 2);
 
+  /**
+   * the rotation the gyro represents is not the same as the robot heading
+   * the gyro data is used as a reference for the pose estimator
+   * the pose estimator offsets the gyro data to get the actual robot heading
+   * 
+   * you do NOT have to zero the gyro
+   */
   private final Pigeon2 gyro = new Pigeon2(0);
 
   private Field2d teleopField = new Field2d();
@@ -51,65 +60,91 @@ public class DriveSubsystem extends SubsystemBase {
   private final Supplier<VisionData> visionDataGetter;
   private final BooleanSupplier visionFreshnessGetter;
 
+  /**
+   * the swerve drive is initialized with a default Pose2d 
+   * (0 x, 0 y, 0 rotation)
+   */
   private final SwerveDrivePoseEstimator swervePoseEstimator = new SwerveDrivePoseEstimator(
     DriveConstants.swerveKinematics,
     gyro.getRotation2d(),
-    new SwerveModulePosition[] {
-      frontLeft.getPosition(),
-            frontRight.getPosition(),
-            rearLeft.getPosition(),
-            rearRight.getPosition()
-          },
-          new Pose2d());
+    getModulePositions(),
+    new Pose2d()
+  );
 
-  private final PIDController headingController =
-      new PIDController(
-          DriveConstants.HEADING_PROPORTIONAL_GAIN,
-          DriveConstants.HEADING_INTEGRAL_GAIN,
-          DriveConstants.HEADING_DERIVATIVE_GAIN);
+  /**
+   * this controller is used for "top down" robot control.
+   * give this controller the current heading and the desired heading
+   * and it will output in radians per second
+   */
+  private final PIDController headingController = new PIDController(
+    DriveConstants.HEADING_PROPORTIONAL_GAIN,
+    DriveConstants.HEADING_INTEGRAL_GAIN,
+    DriveConstants.HEADING_DERIVATIVE_GAIN
+  );
 
-  // Various overload constructor functions for various vision configurations
-  // In competetition both are enabled, but for testing, it is useful to have any combination of
-  // vision subsystems enabled.
-  /** Initialize Drive Subsystem */
   public DriveSubsystem(
     Supplier<VisionData> visionDataGetter,
     BooleanSupplier visionFreshnessGetter
   ) {
     this.visionDataGetter = visionDataGetter;
     this.visionFreshnessGetter = visionFreshnessGetter;
-    zeroHeading();
+
     SmartDashboard.putData("Teleoperated Field", teleopField);
     SmartDashboard.putData("Autonomous Field", autoField);
     SmartDashboard.putData(
-        "Swerve Drive",
-        new Sendable() {
-          @Override
-          public void initSendable(SendableBuilder builder) {
-            builder.setSmartDashboardType("SwerveDrive");
-            builder.addDoubleProperty(
-                "Front Left Angle", () -> frontLeft.getState().angle.getRadians(), null);
-            builder.addDoubleProperty(
-                "Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond, null);
-
-            builder.addDoubleProperty(
-                "Front Right Angle", () -> frontRight.getState().angle.getRadians(), null);
-            builder.addDoubleProperty(
-                "Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond, null);
-
-            builder.addDoubleProperty(
-                "Back Left Angle", () -> rearLeft.getState().angle.getRadians(), null);
-            builder.addDoubleProperty(
-                "Back Left Velocity", () -> rearLeft.getState().speedMetersPerSecond, null);
-
-            builder.addDoubleProperty(
-                "Back Right Angle", () -> rearRight.getState().angle.getRadians(), null);
-            builder.addDoubleProperty(
-                "Back Right Velocity", () -> rearRight.getState().speedMetersPerSecond, null);
-
-            builder.addDoubleProperty("Robot Angle", () -> getHeading().getRadians(), null);
-          }
-        });
+      "Swerve Drive",
+      new Sendable() {
+        @Override
+        public void initSendable(SendableBuilder builder) {
+          builder.setSmartDashboardType("SwerveDrive");
+          builder.addDoubleProperty(
+            "Front Left Angle",
+            () -> frontLeft.getState().angle.getRadians(),
+            null
+          );
+          builder.addDoubleProperty(
+            "Front Left Velocity",
+            () -> frontLeft.getState().speedMetersPerSecond,
+            null
+          );
+          builder.addDoubleProperty(
+            "Front Right Angle",
+            () -> frontRight.getState().angle.getRadians(),
+            null
+          );
+          builder.addDoubleProperty(
+            "Front Right Velocity",
+            () -> frontRight.getState().speedMetersPerSecond,
+            null
+          );
+          builder.addDoubleProperty(
+            "Back Left Angle",
+            () -> backLeft.getState().angle.getRadians(),
+            null
+          );
+          builder.addDoubleProperty(
+            "Back Left Velocity",
+            () -> backLeft.getState().speedMetersPerSecond,
+            null
+          );
+          builder.addDoubleProperty(
+            "Back Right Angle",
+            () -> backRight.getState().angle.getRadians(),
+            null
+          );
+          builder.addDoubleProperty(
+            "Back Right Velocity",
+            () -> backRight.getState().speedMetersPerSecond,
+            null
+          );
+          builder.addDoubleProperty(
+            "Robot Angle",
+            () -> getHeading().getRadians(),
+            null
+          );
+        }
+      }
+    );
     configurePathPlanner();
   }
 
@@ -117,13 +152,8 @@ public class DriveSubsystem extends SubsystemBase {
   public void periodic() {
     // Update the odometry in the periodic block
     swervePoseEstimator.update(
-      getHeading(),
-      new SwerveModulePosition[] {
-        frontLeft.getPosition(),
-        frontRight.getPosition(),
-        rearLeft.getPosition(),
-        rearRight.getPosition()
-      }
+      gyro.getRotation2d(),
+      getModulePositions()
     );
 
     if (visionFreshnessGetter.getAsBoolean()){
@@ -177,50 +207,15 @@ public class DriveSubsystem extends SubsystemBase {
   /**
    * Resets the odometry to the specified pose.
    * does not affect vision
-   *
-   * @param pose The pose to which to set the odometry.
    */
   public Command setEstimatedPose(Pose2d pose) {
     return runOnce(
       () -> {
         swervePoseEstimator.resetPosition(
           gyro.getRotation2d(),
-          new SwerveModulePosition[] {
-            frontLeft.getPosition(),
-            frontRight.getPosition(),
-            rearLeft.getPosition(),
-            rearRight.getPosition()
-          },
+          getModulePositions(),
           pose
         );
-      }
-    )
-  }
-
-  /**
-   * Sets the swerve ModuleStates.
-   *
-   * @param desiredStates The desired SwerveModule states as an Array of SwerveModuleStates
-   */
-  private void setModuleStates(SwerveModuleState[] desiredStates) {
-    frontLeft.setDesiredState(desiredStates[0]);
-    frontRight.setDesiredState(desiredStates[1]);
-    rearLeft.setDesiredState(desiredStates[2]);
-    rearRight.setDesiredState(desiredStates[3]);
-  }
-
-  /**
-   * Method to update SwerveModule states based on given ChassisSpeeds
-   *
-   * @param speeds ChassisSpeeds to drive robot
-   */
-  public Command driveWithChassisSpeeds(ChassisSpeeds speeds) {
-    return run(
-      () -> {
-        ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
-        SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
-        setModuleStates(moduleStates);
       }
     );
   }
@@ -233,6 +228,75 @@ public class DriveSubsystem extends SubsystemBase {
       }
     );
   }
+  /** sets all of the drivetrain motors to 0 */
+  public Command stop(){
+    return runOnce(
+      () -> {
+        frontLeft.stop();
+        frontRight.stop();
+        backLeft.stop();
+        backRight.stop();
+      }
+    );
+  }
+
+  public Command driveRobotRelative(Supplier<ChassisSpeeds> desiredSpeeds){
+    return run(
+      () -> {
+        setModulesFromRobotRelativeSpeeds(desiredSpeeds.get());
+      }
+    );
+  }
+
+  public Command driveFieldRelative(Supplier<ChassisSpeeds> desiredSpeeds){
+    return run(
+      () -> {
+        ChassisSpeeds convertedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(desiredSpeeds.get(), getHeading());
+        setModulesFromRobotRelativeSpeeds(convertedSpeeds);
+      }
+    );
+  }
+
+  public Command driveTopDown(
+    DoubleSupplier xVelocityMPS,
+    DoubleSupplier yVelocityMPS,
+    Supplier<Rotation2d> desiredFieldRotation
+  ){
+    return run(
+      () -> {
+        double pidOutput = headingController.calculate(
+          getHeading().getRadians(),
+          desiredFieldRotation.get().getRadians()
+        );
+
+        ChassisSpeeds finalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
+          xVelocityMPS.getAsDouble(),
+          yVelocityMPS.getAsDouble(),
+          pidOutput,
+          getHeading()
+        );
+
+        setModulesFromRobotRelativeSpeeds(finalSpeeds);
+      }
+    );
+  }
+
+  private void setModulesFromRobotRelativeSpeeds(ChassisSpeeds speeds) {
+    ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
+    SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
+    setModuleStates(moduleStates);
+  }
+
+  /**
+   * @param desiredStates [front left, front right, back left, back right]
+   */
+  private void setModuleStates(SwerveModuleState[] desiredStates) {
+    frontLeft.setDesiredState(desiredStates[0]);
+    frontRight.setDesiredState(desiredStates[1]);
+    backLeft.setDesiredState(desiredStates[2]);
+    backRight.setDesiredState(desiredStates[3]);
+  }
 
   /** Returns the heading from getEstimatedPose() */
   public Rotation2d getHeading() {
@@ -244,36 +308,39 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * Calculate new robot heading based on given input
-   *
-   * @param targetHeading {@link Rotation2d} with desired heading
-   * @return Calculated heading
-   */
-  public double calculateHeading(Rotation2d targetHeading) {
-    return headingController.calculate(
-        getEstimatedPose().getRotation().getRadians(), targetHeading.getRadians());
-  }
-
-  /**
-   * Gets the current Swerve Module States
-   *
-   * @return Array of {@link SwerveModuleState} objects with the current states
+   * @return [front left, front right, back left, back right] 
    */
   private SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
-      frontLeft.getState(), frontRight.getState(), rearLeft.getState(), rearRight.getState()
+      frontLeft.getState(),
+      frontRight.getState(),
+      backLeft.getState(),
+      backRight.getState()
     };
   }
 
   /**
-   * Returns the robot relative speed as ChassisSpeeds
-   *
-   * @return Robot relative ChassisSpeeds
+   * @return [front left, front right, back left, back right] 
+   */
+  private SwerveModulePosition[] getModulePositions() {
+    return new SwerveModulePosition[] {
+      frontLeft.getPosition(),
+      frontRight.getPosition(),
+      backLeft.getPosition(),
+      backRight.getPosition()
+    };
+  }
+
+  /**
+   * @return robot relative ChassisSpeeds
    */
   public ChassisSpeeds getRelativeSpeeds() {
     return DriveConstants.swerveKinematics.toChassisSpeeds(getModuleStates());
   }
 
+  /**
+   * @return robot relative linear velocity in meters per second
+   */
   private double getLinearVelocity() {
     ChassisSpeeds relativeSpeeds = getRelativeSpeeds();
     return Math.hypot(relativeSpeeds.vxMetersPerSecond, relativeSpeeds.vyMetersPerSecond);
@@ -287,7 +354,6 @@ public class DriveSubsystem extends SubsystemBase {
     Logger.recordOutput("Drive/Estimated Robot Y", estimatedPose.getY());
     Logger.recordOutput("Drive/Estimated Rotation", estimatedPose.getRotation().getRadians());
     Logger.recordOutput("Drive/Estimated Robot Pose", estimatedPose);
-    Logger.recordOutput("Drive/Robot Heading", getHeading());
     Logger.recordOutput("Drive/Swerve Module States", getModuleStates());
     Logger.recordOutput("Drive/Linear Velocity", getLinearVelocity());
   }

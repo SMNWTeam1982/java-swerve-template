@@ -4,31 +4,22 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import java.util.Optional;
 import org.littletonrobotics.junction.Logger;
 
 /**
  * Abstract class for the implementation of a generic Vision Subsystem providing several APIs used
- * in pose estimation
+ * in pose estimation.
  * 
- * another purpose this class serves is to prevent vision results from getting fetched multiple times per loop
+ * all public methods can be safely called multiple times per loop and will always return the same thing in the same loop.
+ * vision hardware is called only once per loop
  */
 public abstract class VisionSubsystem extends SubsystemBase {
 
   private VisionData lastVisionData;
   private boolean isDataFresh = false;
-
-  private final String name;
-
-  /**
-   * Constructs a generic Vision Subsystem object
-   *
-   * @param name The name of the subsystem for logging
-   */
-  public VisionSubsystem(String name) {
-    this.name = name;
-  }
 
   @Override
   public void periodic() {
@@ -46,9 +37,6 @@ public abstract class VisionSubsystem extends SubsystemBase {
     return lastVisionData;
   }
 
-  /**
-   * it is safe to call this multiple times
-   */
   public Pose2d getLastPose(){
     return lastVisionData.pose;
   }
@@ -72,18 +60,22 @@ public abstract class VisionSubsystem extends SubsystemBase {
   }
 
   /**
-   * it is NOT safe to call this multiple times, only call it once per periodic loop
-   * if the vision system being used cannot get its position this will return None
-   * the optional will contain the pose and the timestamp in seconds
+   * it is NOT safe to call this multiple times, only call it once per periodic loop.
+   * if the vision system being used cannot get its position this will return an empty optional
    */
   protected abstract Optional<VisionData> getVisionResult();
 
-  public abstract void resetPose(Pose2d newPose);
+  public abstract Command resetPose(Pose2d newPose);
+
+  public abstract Command zeroHeading();
+
+  /** gets the name of the vision subsystem for logging and differentiation */
+  public abstract String getName();
 
   private void logPoseEstimation(Pose2d estimatedPose) {
-    Logger.recordOutput(name + "X Position", estimatedPose.getX());
-    Logger.recordOutput(name + "Y Position", estimatedPose.getY());
-    Logger.recordOutput(name + "Rotation", estimatedPose.getRotation().getRadians());
-    Logger.recordOutput(name + "Estimated Pose", estimatedPose);
+    Logger.recordOutput(getName() + "X Position", estimatedPose.getX());
+    Logger.recordOutput(getName() + "Y Position", estimatedPose.getY());
+    Logger.recordOutput(getName() + "Rotation", estimatedPose.getRotation().getRadians());
+    Logger.recordOutput(getName() + "Estimated Pose", estimatedPose);
   }
 }

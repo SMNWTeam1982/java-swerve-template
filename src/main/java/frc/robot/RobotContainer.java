@@ -5,6 +5,7 @@
 package frc.robot;
 
 import com.pathplanner.lib.auto.AutoBuilder;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandJoystick;
 import edu.wpi.first.wpilibj2.command.button.CommandStadiaController;
@@ -16,6 +17,7 @@ import frc.robot.commands.DriveRobotRelative;
 import frc.robot.subsystems.swerve.DriveSubsystem;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
 import frc.robot.subsystems.vision.QuestNavSubsystem;
+import frc.robot.subsystems.vision.VisionSubsystem;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -26,45 +28,27 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
 
-  private PhotonVisionSubsystem photonVision;
-  private QuestNavSubsystem questNav;
-  private DriveSubsystem driveTrain;
+  private final PhotonVisionSubsystem visionSubsystem = new PhotonVisionSubsystem(
+    Constants.VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT,
+    "photonCamera"
+  );
+
+  private final DriveSubsystem driveSubsystem = new DriveSubsystem(
+    () -> visionSubsystem.getLastVisionData(),
+    () -> visionSubsystem.isDataFresh()
+  );
 
   private final LoggedDashboardChooser<Command> autoChooser;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandStadiaController driverController =
-      new CommandStadiaController(OperatorConstants.DRIVER_CONTROLLER_PORT);
-  private final CommandJoystick operatorController =
-      new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
+  private final CommandStadiaController driverController = new CommandStadiaController(OperatorConstants.DRIVER_CONTROLLER_PORT);
+  private final CommandJoystick operatorController = new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   @SuppressWarnings("unused")
   public RobotContainer() {
-    if (OperatorConstants.ENABLE_PHOTONLIB && OperatorConstants.ENABLE_QUESTNAV) {
-      photonVision =
-          new PhotonVisionSubsystem(
-              "Front Limelight",
-              VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT,
-              VisionConstants.PHOTON_CAMERA_NAME);
-      questNav = new QuestNavSubsystem("Quest Nav");
-      driveTrain = new DriveSubsystem(questNav, photonVision);
-    } else if (OperatorConstants.ENABLE_PHOTONLIB) {
-      photonVision =
-          new PhotonVisionSubsystem(
-              "Front Limelight",
-              VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT,
-              VisionConstants.PHOTON_CAMERA_NAME);
-      driveTrain = new DriveSubsystem(photonVision);
-    } else if (OperatorConstants.ENABLE_QUESTNAV) {
-      questNav = new QuestNavSubsystem("Quest Nav");
-      driveTrain = new DriveSubsystem(questNav);
-    } else {
-      driveTrain = new DriveSubsystem();
-    }
 
-    autoChooser =
-        new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
+    autoChooser = new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
     // Configure the trigger bindings
     configureDriverBindings();
     configureOperatorBindings();
@@ -80,13 +64,20 @@ public class RobotContainer {
    * joysticks}.
    */
   private void configureDriverBindings() {
-    driveTrain.setDefaultCommand(
-        new DriveRobotRelative(
-            driveTrain,
-            () -> -deadZone(driverController.getLeftY()) * 2,
-            () -> -deadZone(driverController.getLeftX()) * 2,
-            () -> deadZone(driverController.getRightX()) * 3,
-            driverController.a()));
+    driveSubsystem.setDefaultCommand(
+      driveSubsystem.driveFieldRelative(
+        () -> {
+          return new ChassisSpeeds(
+            -deadZone(driverController.getLeftY()) * 2,
+            -deadZone(driverController.getLeftX()) * 2,
+            deadZone(driverController.getRightX()) * 3
+          );
+        }
+      )
+    );
+
+    // resets heading when button is released
+    driverController.a().onFalse(driveSubsystem.zeroHeading().alongWith(visionSubsystem.zeroHeading()));
   }
 
   private void configureOperatorBindings() {}

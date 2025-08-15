@@ -75,19 +75,13 @@ public class SwerveModule {
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
 
-  /**
-   * Runs SwerveModule with desired state parameters.
-   *
-   * @param desiredState Desired state with speed and angle components
-   */
   public void setDesiredState(SwerveModuleState desiredState) {
     if (Math.abs(desiredState.speedMetersPerSecond) < 0.001) {
-      stop();
+      driveMotor.set(0);
       return;
     }
 
-    Rotation2d encoderRotation =
-        Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
+    Rotation2d encoderRotation = Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
 
     desiredState.optimize(getState().angle);
 
@@ -138,6 +132,7 @@ public class SwerveModule {
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
 
+  /** halts both the turn motor and the drive motor */
   public void stop() {
     turnMotor.set(0);
     driveMotor.set(0);
