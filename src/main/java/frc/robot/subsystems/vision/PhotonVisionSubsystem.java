@@ -19,54 +19,52 @@ public class PhotonVisionSubsystem extends VisionSubsystem {
 
   public PhotonPoseEstimator photonPoseEstimator;
 
-  public PhotonVisionSubsystem(
-    Transform3d cameraRelativeToRobot, 
-    String cameraName
-  ) {
-    photonPoseEstimator = new PhotonPoseEstimator(
-      AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
-      PoseStrategy.LOWEST_AMBIGUITY,
-      cameraRelativeToRobot
-    );
+  public PhotonVisionSubsystem(Transform3d cameraRelativeToRobot, String cameraName) {
+    photonPoseEstimator =
+        new PhotonPoseEstimator(
+            AprilTagFieldLayout.loadField(AprilTagFields.kDefaultField),
+            PoseStrategy.LOWEST_AMBIGUITY,
+            cameraRelativeToRobot);
     instanceCamera = new PhotonCamera(cameraName);
   }
 
   @Override
-  public String getName(){
+  public String getName() {
     return "photon vision";
   }
 
   @Override
-  protected Optional<VisionData> getVisionResult(){
+  protected Optional<VisionData> getVisionResult() {
     Optional<EstimatedRobotPose> lastEstimatedPose = Optional.empty();
 
-    for (var result : instanceCamera.getAllUnreadResults()){
+    for (var result : instanceCamera.getAllUnreadResults()) {
       lastEstimatedPose = photonPoseEstimator.update(result);
     } // if getAllUnreadResults() is empty then lastEstimatedPose will be Optional.empty()
     // this also accounts for results that have data but are surrounded by results without data
 
-    if (lastEstimatedPose.isEmpty()){
+    if (lastEstimatedPose.isEmpty()) {
       return Optional.empty();
     }
 
     EstimatedRobotPose estimatedPose = lastEstimatedPose.get();
 
     return Optional.of(
-      new VisionData(
-        estimatedPose.estimatedPose.toPose2d(),
-        estimatedPose.timestampSeconds,
-        Constants.VisionConstants.PHOTON_CAM_VISION_TRUST // we should calculate this the same way photonVision does in their example code
-      )
-    );
+        new VisionData(
+            estimatedPose.estimatedPose.toPose2d(),
+            estimatedPose.timestampSeconds,
+            Constants.VisionConstants
+                .PHOTON_CAM_VISION_TRUST // we should calculate this the same way photonVision does
+            // in their example code
+            ));
   }
 
   @Override
-  public Command resetPose(Pose2d newPose){
+  public Command resetPose(Pose2d newPose) {
     return runOnce(() -> {});
   } // this doesn't apply to photonvision
 
   @Override
-  public Command zeroHeading(){
+  public Command zeroHeading() {
     return runOnce(() -> {});
   }
 }

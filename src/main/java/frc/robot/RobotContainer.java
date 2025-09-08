@@ -12,12 +12,8 @@ import edu.wpi.first.wpilibj2.command.button.CommandStadiaController;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.commands.DriveRobotRelative;
 import frc.robot.subsystems.swerve.DriveSubsystem;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
-import frc.robot.subsystems.vision.QuestNavSubsystem;
-import frc.robot.subsystems.vision.VisionSubsystem;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 /**
@@ -28,27 +24,28 @@ import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
  */
 public class RobotContainer {
 
-  private final PhotonVisionSubsystem visionSubsystem = new PhotonVisionSubsystem(
-    Constants.VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT,
-    "photonCamera"
-  );
+  private final PhotonVisionSubsystem visionSubsystem =
+      new PhotonVisionSubsystem(
+          Constants.VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT, "photonCamera");
 
-  private final DriveSubsystem driveSubsystem = new DriveSubsystem(
-    () -> visionSubsystem.getLastVisionData(),
-    () -> visionSubsystem.isDataFresh()
-  );
+  private final DriveSubsystem driveSubsystem =
+      new DriveSubsystem(
+          () -> visionSubsystem.getLastVisionData(), () -> visionSubsystem.isDataFresh());
 
   private final LoggedDashboardChooser<Command> autoChooser;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandStadiaController driverController = new CommandStadiaController(OperatorConstants.DRIVER_CONTROLLER_PORT);
-  private final CommandJoystick operatorController = new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
+  private final CommandStadiaController driverController =
+      new CommandStadiaController(OperatorConstants.DRIVER_CONTROLLER_PORT);
+  private final CommandJoystick operatorController =
+      new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   @SuppressWarnings("unused")
   public RobotContainer() {
 
-    autoChooser = new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
+    autoChooser =
+        new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
     // Configure the trigger bindings
     configureDriverBindings();
     configureOperatorBindings();
@@ -65,19 +62,16 @@ public class RobotContainer {
    */
   private void configureDriverBindings() {
     driveSubsystem.setDefaultCommand(
-      driveSubsystem.driveFieldRelative(
-        () -> {
-          return new ChassisSpeeds(
-            -deadZone(driverController.getLeftY()) * 2,
-            -deadZone(driverController.getLeftX()) * 2,
-            deadZone(driverController.getRightX()) * 3
-          );
-        }
-      )
-    );
+        driveSubsystem.driveFieldRelative(
+            () -> {
+              return new ChassisSpeeds(
+                  -deadZone(driverController.getLeftY()) * 2,
+                  -deadZone(driverController.getLeftX()) * 2,
+                  deadZone(driverController.getRightX()) * 3);
+            }));
 
     // resets heading when button is released
-    driverController.a().onFalse(driveSubsystem.zeroHeading().alongWith(visionSubsystem.zeroHeading()));
+    driverController.a().onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
   }
 
   private void configureOperatorBindings() {}

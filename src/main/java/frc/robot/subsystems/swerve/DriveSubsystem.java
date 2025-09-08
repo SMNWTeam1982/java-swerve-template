@@ -3,6 +3,7 @@
 // the WPILib BSD license file in the root directory of this project.
 
 package frc.robot.subsystems.swerve;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
@@ -16,8 +17,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.LinearVelocity;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -25,14 +24,10 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.vision.PhotonVisionSubsystem;
-import frc.robot.subsystems.vision.QuestNavSubsystem;
 import frc.robot.subsystems.vision.VisionData;
+import frc.robot.subsystems.vision.VisionSubsystem;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -46,11 +41,11 @@ public class DriveSubsystem extends SubsystemBase {
   private final SwerveModule backRight = new SwerveModule(3, 6, 2);
 
   /**
-   * the rotation the gyro represents is not the same as the robot heading
-   * the gyro data is used as a reference for the pose estimator
-   * the pose estimator offsets the gyro data to get the actual robot heading
-   * 
-   * you do NOT have to zero the gyro
+   * the rotation the gyro represents is not the same as the robot heading the gyro data is used as
+   * a reference for the pose estimator the pose estimator offsets the gyro data to get the actual
+   * robot heading
+   *
+   * <p>you do NOT have to zero the gyro
    */
   private final Pigeon2 gyro = new Pigeon2(0);
 
@@ -60,10 +55,7 @@ public class DriveSubsystem extends SubsystemBase {
   private final Supplier<VisionData> visionDataGetter;
   private final BooleanSupplier visionFreshnessGetter;
 
-  /**
-   * the swerve drive is initialized with a default Pose2d 
-   * (0 x, 0 y, 0 rotation)
-   */
+  /** the swerve drive is initialized with a default Pose2d (0 x, 0 y, 0 rotation) */
   private final SwerveDrivePoseEstimator swervePoseEstimator = new SwerveDrivePoseEstimator(
     DriveConstants.swerveKinematics,
     gyro.getRotation2d(),
@@ -72,9 +64,8 @@ public class DriveSubsystem extends SubsystemBase {
   );
 
   /**
-   * this controller is used for "top down" robot control.
-   * give this controller the current heading and the desired heading
-   * and it will output in radians per second
+   * this controller is used for "top down" robot control. give this controller the current heading
+   * and the desired heading and it will output in radians per second
    */
   private final PIDController headingController = new PIDController(
     DriveConstants.HEADING_PROPORTIONAL_GAIN,
@@ -83,88 +74,43 @@ public class DriveSubsystem extends SubsystemBase {
   );
 
   public DriveSubsystem(
-    Supplier<VisionData> visionDataGetter,
-    BooleanSupplier visionFreshnessGetter
-  ) {
+      Supplier<VisionData> visionDataGetter, BooleanSupplier visionFreshnessGetter) {
     this.visionDataGetter = visionDataGetter;
     this.visionFreshnessGetter = visionFreshnessGetter;
 
     SmartDashboard.putData("Teleoperated Field", teleopField);
     SmartDashboard.putData("Autonomous Field", autoField);
     SmartDashboard.putData(
-      "Swerve Drive",
-      new Sendable() {
-        @Override
-        public void initSendable(SendableBuilder builder) {
-          builder.setSmartDashboardType("SwerveDrive");
-          builder.addDoubleProperty(
-            "Front Left Angle",
-            () -> frontLeft.getState().angle.getRadians(),
-            null
-          );
-          builder.addDoubleProperty(
-            "Front Left Velocity",
-            () -> frontLeft.getState().speedMetersPerSecond,
-            null
-          );
-          builder.addDoubleProperty(
-            "Front Right Angle",
-            () -> frontRight.getState().angle.getRadians(),
-            null
-          );
-          builder.addDoubleProperty(
-            "Front Right Velocity",
-            () -> frontRight.getState().speedMetersPerSecond,
-            null
-          );
-          builder.addDoubleProperty(
-            "Back Left Angle",
-            () -> backLeft.getState().angle.getRadians(),
-            null
-          );
-          builder.addDoubleProperty(
-            "Back Left Velocity",
-            () -> backLeft.getState().speedMetersPerSecond,
-            null
-          );
-          builder.addDoubleProperty(
-            "Back Right Angle",
-            () -> backRight.getState().angle.getRadians(),
-            null
-          );
-          builder.addDoubleProperty(
-            "Back Right Velocity",
-            () -> backRight.getState().speedMetersPerSecond,
-            null
-          );
-          builder.addDoubleProperty(
-            "Robot Angle",
-            () -> getHeading().getRadians(),
-            null
-          );
-        }
-      }
-    );
+        "Swerve Drive",
+        new Sendable() {
+          @Override
+          public void initSendable(SendableBuilder builder) {
+            builder.setSmartDashboardType("SwerveDrive");
+            builder.addDoubleProperty("Front Left Angle", () -> frontLeft.getState().angle.getRadians(), null);
+            builder.addDoubleProperty("Front Left Velocity", () -> frontLeft.getState().speedMetersPerSecond, null);
+            builder.addDoubleProperty("Front Right Angle", () -> frontRight.getState().angle.getRadians(), null);
+            builder.addDoubleProperty("Front Right Velocity", () -> frontRight.getState().speedMetersPerSecond, null);
+            builder.addDoubleProperty("Back Left Angle", () -> backLeft.getState().angle.getRadians(), null);
+            builder.addDoubleProperty("Back Left Velocity", () -> backLeft.getState().speedMetersPerSecond, null);
+            builder.addDoubleProperty("Back Right Angle", () -> backRight.getState().angle.getRadians(), null);
+            builder.addDoubleProperty("Back Right Velocity", () -> backRight.getState().speedMetersPerSecond, null);
+            builder.addDoubleProperty("Robot Angle", () -> getHeading().getRadians(), null);
+          }
+        });
     configurePathPlanner();
   }
 
   @Override
   public void periodic() {
     // Update the odometry in the periodic block
-    swervePoseEstimator.update(
-      gyro.getRotation2d(),
-      getModulePositions()
-    );
+    swervePoseEstimator.update(gyro.getRotation2d(), getModulePositions());
 
-    if (visionFreshnessGetter.getAsBoolean()){
+    if (visionFreshnessGetter.getAsBoolean()) {
       VisionData lastVisionData = visionDataGetter.get();
       swervePoseEstimator.addVisionMeasurement(
-        lastVisionData.pose,
-        lastVisionData.timestamp,
-        lastVisionData.standardDeviations
-      );
+          lastVisionData.pose, lastVisionData.timestamp, lastVisionData.standardDeviations);
     }
-    
+
     logRobotPose(getEstimatedPose());
   }
 
@@ -204,81 +150,70 @@ public class DriveSubsystem extends SubsystemBase {
         this);
   }
 
-  /**
-   * Resets the odometry to the specified pose.
-   * does not affect vision
-   */
-  public Command setEstimatedPose(Pose2d pose) {
+  /** Resets the pose estimator to the specified pose. */
+  public Command resetEstimatedPose(Pose2d pose, VisionSubsystem vision) {
     return runOnce(
-      () -> {
-        swervePoseEstimator.resetPosition(
-          gyro.getRotation2d(),
-          getModulePositions(),
-          pose
-        );
-      }
-    );
+        () -> {
+          vision.resetPose(pose);
+          swervePoseEstimator.resetPosition(gyro.getRotation2d(), getModulePositions(), pose);
+        });
   }
 
-  /** Zeroes the heading of the pose estimator, vision not affected */
-  public Command zeroHeading() {
+  /** Zeroes the heading of the pose estimator */
+  public Command zeroEstimatedHeading(VisionSubsystem vision) {
     return runOnce(
-      () -> {
-        swervePoseEstimator.resetRotation(new Rotation2d());
-      }
-    );
+        () -> {
+          vision.zeroHeading();
+          swervePoseEstimator.resetRotation(new Rotation2d());
+        });
   }
+
   /** sets all of the drivetrain motors to 0 */
-  public Command stop(){
+  public Command stop() {
     return runOnce(
-      () -> {
-        frontLeft.stop();
-        frontRight.stop();
-        backLeft.stop();
-        backRight.stop();
-      }
-    );
+        () -> {
+          frontLeft.stop();
+          frontRight.stop();
+          backLeft.stop();
+          backRight.stop();
+        });
   }
 
-  public Command driveRobotRelative(Supplier<ChassisSpeeds> desiredSpeeds){
+  public Command driveRobotRelative(Supplier<ChassisSpeeds> desiredSpeeds) {
     return run(
-      () -> {
-        setModulesFromRobotRelativeSpeeds(desiredSpeeds.get());
-      }
-    );
+        () -> {
+          setModulesFromRobotRelativeSpeeds(desiredSpeeds.get());
+        });
   }
 
-  public Command driveFieldRelative(Supplier<ChassisSpeeds> desiredSpeeds){
+  public Command driveFieldRelative(Supplier<ChassisSpeeds> desiredSpeeds) {
     return run(
-      () -> {
-        ChassisSpeeds convertedSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(desiredSpeeds.get(), getHeading());
-        setModulesFromRobotRelativeSpeeds(convertedSpeeds);
-      }
-    );
+        () -> {
+          ChassisSpeeds convertedSpeeds =
+              ChassisSpeeds.fromFieldRelativeSpeeds(desiredSpeeds.get(), getHeading());
+          setModulesFromRobotRelativeSpeeds(convertedSpeeds);
+        });
   }
 
   public Command driveTopDown(
-    DoubleSupplier xVelocityMPS,
-    DoubleSupplier yVelocityMPS,
-    Supplier<Rotation2d> desiredFieldRotation
-  ){
-    return run(
-      () -> {
-        double pidOutput = headingController.calculate(
-          getHeading().getRadians(),
-          desiredFieldRotation.get().getRadians()
-        );
+      DoubleSupplier xVelocityMPS,
+      DoubleSupplier yVelocityMPS,
+      Supplier<Rotation2d> desiredFieldRotation) {
+    return runEnd(
+        () -> {
+          double pidOutput =
+              headingController.calculate(
+                  getHeading().getRadians(), desiredFieldRotation.get().getRadians());
 
-        ChassisSpeeds finalSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
-          xVelocityMPS.getAsDouble(),
-          yVelocityMPS.getAsDouble(),
-          pidOutput,
-          getHeading()
-        );
+          ChassisSpeeds finalSpeeds =
+              ChassisSpeeds.fromFieldRelativeSpeeds(
+                  xVelocityMPS.getAsDouble(), yVelocityMPS.getAsDouble(), pidOutput, getHeading());
 
-        setModulesFromRobotRelativeSpeeds(finalSpeeds);
-      }
-    );
+          setModulesFromRobotRelativeSpeeds(finalSpeeds);
+        },
+        () -> {
+          headingController.reset();
+        });
   }
 
   private void setModulesFromRobotRelativeSpeeds(ChassisSpeeds speeds) {
@@ -308,19 +243,16 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
-   * @return [front left, front right, back left, back right] 
+   * @return [front left, front right, back left, back right]
    */
   private SwerveModuleState[] getModuleStates() {
     return new SwerveModuleState[] {
-      frontLeft.getState(),
-      frontRight.getState(),
-      backLeft.getState(),
-      backRight.getState()
+      frontLeft.getState(), frontRight.getState(), backLeft.getState(), backRight.getState()
     };
   }
 
   /**
-   * @return [front left, front right, back left, back right] 
+   * @return [front left, front right, back left, back right]
    */
   private SwerveModulePosition[] getModulePositions() {
     return new SwerveModulePosition[] {
