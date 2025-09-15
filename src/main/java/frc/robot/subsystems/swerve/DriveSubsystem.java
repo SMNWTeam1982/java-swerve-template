@@ -132,9 +132,9 @@ public class DriveSubsystem extends SubsystemBase {
         });
     AutoBuilder.configure(
         this::getEstimatedPose,
-        this::setEstimatedPose,
-        this::getRelativeSpeeds,
-        (speeds) -> driveWithChassisSpeeds(speeds),
+        (pose) -> {},
+        this::getRobotRelativeSpeeds,
+        (speeds) -> setModulesFromRobotRelativeSpeeds(speeds),
         new PPHolonomicDriveController(
             new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
             new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
@@ -159,6 +159,8 @@ public class DriveSubsystem extends SubsystemBase {
         });
   }
 
+
+
   /** Zeroes the heading of the pose estimator */
   public Command zeroEstimatedHeading(VisionSubsystem vision) {
     return runOnce(
@@ -179,22 +181,27 @@ public class DriveSubsystem extends SubsystemBase {
         });
   }
 
-  public Command driveRobotRelative(Supplier<ChassisSpeeds> desiredSpeeds) {
+  /** drives the robot with chassis speeds relative to the robot coordinate system */
+  public Command driveRobotRelative(Supplier<ChassisSpeeds> desiredRobotSpeeds) {
     return run(
         () -> {
-          setModulesFromRobotRelativeSpeeds(desiredSpeeds.get());
+          setModulesFromRobotRelativeSpeeds(desiredRobotSpeeds.get());
         });
   }
 
-  public Command driveFieldRelative(Supplier<ChassisSpeeds> desiredSpeeds) {
+  /** drives the robot with chassis speeds relative to the field coordinate system */
+  public Command driveFieldRelative(Supplier<ChassisSpeeds> desiredFieldSpeeds) {
     return run(
         () -> {
           ChassisSpeeds convertedSpeeds =
-              ChassisSpeeds.fromFieldRelativeSpeeds(desiredSpeeds.get(), getHeading());
+              ChassisSpeeds.fromFieldRelativeSpeeds(desiredFieldSpeeds.get(), getHeading());
           setModulesFromRobotRelativeSpeeds(convertedSpeeds);
         });
   }
 
+  /** drives the robot like a top-down shooter
+   * <p>the x and y are velocities and the field rotation is relative to the field coordinate system
+   */
   public Command driveTopDown(
       DoubleSupplier xVelocityMPS,
       DoubleSupplier yVelocityMPS,
@@ -224,6 +231,7 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
+   * calls setDesiredState() on each of the swerve modules
    * @param desiredStates [front left, front right, back left, back right]
    */
   private void setModuleStates(SwerveModuleState[] desiredStates) {
@@ -238,11 +246,13 @@ public class DriveSubsystem extends SubsystemBase {
     return getEstimatedPose().getRotation();
   }
 
+  /** gets the estimated position from the pose estimator */
   public Pose2d getEstimatedPose() {
     return swervePoseEstimator.getEstimatedPosition();
   }
 
   /**
+   * gets the rotation and velocity of each module
    * @return [front left, front right, back left, back right]
    */
   private SwerveModuleState[] getModuleStates() {
@@ -252,6 +262,7 @@ public class DriveSubsystem extends SubsystemBase {
   }
 
   /**
+   * gets the rotation and distance traveled from each module
    * @return [front left, front right, back left, back right]
    */
   private SwerveModulePosition[] getModulePositions() {
@@ -266,15 +277,17 @@ public class DriveSubsystem extends SubsystemBase {
   /**
    * @return robot relative ChassisSpeeds
    */
-  public ChassisSpeeds getRelativeSpeeds() {
+  public ChassisSpeeds getRobotRelativeSpeeds() {
     return DriveConstants.swerveKinematics.toChassisSpeeds(getModuleStates());
   }
+
+  
 
   /**
    * @return robot relative linear velocity in meters per second
    */
   private double getLinearVelocity() {
-    ChassisSpeeds relativeSpeeds = getRelativeSpeeds();
+    ChassisSpeeds relativeSpeeds = getRobotRelativeSpeeds();
     return Math.hypot(relativeSpeeds.vxMetersPerSecond, relativeSpeeds.vyMetersPerSecond);
   }
 

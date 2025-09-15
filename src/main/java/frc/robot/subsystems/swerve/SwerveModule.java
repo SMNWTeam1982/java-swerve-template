@@ -17,7 +17,9 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import frc.robot.Constants.SwerveModuleConstants;
 import org.littletonrobotics.junction.Logger;
 
-/** Individual Swerve Module for a Swerve Drive drivetrain */
+/** 
+ * this is NOT its own subsystem, this is only an abstraction for the drive subsystem that manages one module
+ */
 public class SwerveModule {
   private SparkMax driveMotor;
   private SparkMax turnMotor;
@@ -30,24 +32,20 @@ public class SwerveModule {
 
   /**
    * Constructs an instance of a SwerveModule with a drive motor, turn motor, and turn encoder.
-   *
-   * @param driveMotorID CAN ID of the drive motor
-   * @param turnMotorID CAN ID of the turning motor
-   * @param encoderID CAN ID of the module's absolute encoder
    */
-  public SwerveModule(int driveMotorID, int turnMotorID, int encoderID) {
-    driveMotor = new SparkMax(driveMotorID, MotorType.kBrushless);
+  public SwerveModule(int driveMotorCANID, int turnMotorCANID, int encoderCANID) {
+    driveMotor = new SparkMax(driveMotorCANID, MotorType.kBrushless);
     driveMotor.configure(
         SwerveModuleConstants.DRIVE_MOTOR_CONFIG,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
-    turnMotor = new SparkMax(turnMotorID, MotorType.kBrushless);
+    turnMotor = new SparkMax(turnMotorCANID, MotorType.kBrushless);
     turnMotor.configure(
         SwerveModuleConstants.TURN_MOTOR_CONFIG,
         SparkBase.ResetMode.kResetSafeParameters,
         SparkBase.PersistMode.kPersistParameters);
 
-    turnEncoder = new CANcoder(encoderID);
+    turnEncoder = new CANcoder(encoderCANID);
     driveEncoder = driveMotor.getEncoder();
 
     turnPIDController =
@@ -64,22 +62,7 @@ public class SwerveModule {
     turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
-  /**
-   * Returns the current position of the SwerveModule
-   *
-   * @return the position of the SwerveModule as a SwerveModulePosition
-   */
-  public SwerveModulePosition getPosition() {
-    return new SwerveModulePosition(
-        driveEncoder.getPosition() * SwerveModuleConstants.POSITION_TO_METERS_MULTIPLIER,
-        Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
-  }
-
   public void setDesiredState(SwerveModuleState desiredState) {
-    if (Math.abs(desiredState.speedMetersPerSecond) < 0.001) {
-      driveMotor.set(0);
-      return;
-    }
 
     Rotation2d encoderRotation =
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
@@ -97,6 +80,10 @@ public class SwerveModule {
       driveOutput = -12.0;
     }
 
+    if (Math.abs(driveOutput) < 0.001) {
+      driveOutput = 0.0;
+    }
+
     double turnOutput =
         turnPIDController.calculate(encoderRotation.getRadians(), desiredState.angle.getRadians());
 
@@ -106,9 +93,16 @@ public class SwerveModule {
     if (turnOutput < -1.0) {
       turnOutput = -1.0;
     }
+
     Logger.recordOutput("Turn Value", turnOutput);
     driveMotor.setVoltage(driveOutput);
     turnMotor.set(-turnOutput);
+  }
+
+  /** halts both the turn motor and the drive motor */
+  public void stop() {
+    turnMotor.set(0);
+    driveMotor.set(0);
   }
 
   /**
@@ -123,19 +117,20 @@ public class SwerveModule {
   }
 
   /**
-   * Returns the current state of the module
-   *
-   * @return The current SwerveModuleState of the module
+   * @return the angle of the wheel and the velocity of the wheel
    */
   public SwerveModuleState getState() {
     return new SwerveModuleState(
-        driveEncoder.getVelocity(),
+        driveEncoder.getVelocity() * SwerveModuleConstants.RPM_TO_MPS_MULTIPLIER,
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
 
-  /** halts both the turn motor and the drive motor */
-  public void stop() {
-    turnMotor.set(0);
-    driveMotor.set(0);
+  /**
+   * @return the angle of the wheel and the distance traveled by the wheel
+   */
+  public SwerveModulePosition getPosition() {
+    return new SwerveModulePosition(
+        driveEncoder.getPosition() * SwerveModuleConstants.POSITION_TO_METERS_MULTIPLIER,
+        Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble()));
   }
 }
