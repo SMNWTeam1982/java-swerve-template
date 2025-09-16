@@ -8,6 +8,7 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -211,6 +212,37 @@ public class DriveSubsystem extends SubsystemBase {
           setModulesFromRobotRelativeSpeeds(convertedSpeeds);
         });
   }
+  /**
+   * relative to the drivers station +y is away an +x is to the right
+   * <p> see the wpilib coordinate system page, the controller's x and y are wierd
+   */
+  public Command driveFromDriversStation(Supplier<ChassisSpeeds> driversStationRelativeSpeeds, boolean onBlueSide){
+    if (onBlueSide){
+      return driveFieldRelative(
+        () -> {
+          ChassisSpeeds driversSpeeds = driversStationRelativeSpeeds.get();
+          ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
+          fieldRelativeSpeeds.vxMetersPerSecond = driversSpeeds.vyMetersPerSecond;
+          fieldRelativeSpeeds.vyMetersPerSecond = -driversSpeeds.vxMetersPerSecond;
+          fieldRelativeSpeeds.omegaRadiansPerSecond = driversSpeeds.omegaRadiansPerSecond;
+
+          return fieldRelativeSpeeds;
+        }
+      );
+    } else {
+      return driveFieldRelative(
+        () -> {
+          ChassisSpeeds driversSpeeds = driversStationRelativeSpeeds.get();
+          ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
+          fieldRelativeSpeeds.vxMetersPerSecond = -driversSpeeds.vyMetersPerSecond;
+          fieldRelativeSpeeds.vyMetersPerSecond = driversSpeeds.vxMetersPerSecond;
+          fieldRelativeSpeeds.omegaRadiansPerSecond = driversSpeeds.omegaRadiansPerSecond;
+
+          return fieldRelativeSpeeds;
+        }
+      );
+    }
+  }
 
   /** drives the robot like a top-down shooter
    * <p>the x & y velocities and the field rotation are relative to the field coordinate system
@@ -234,6 +266,21 @@ public class DriveSubsystem extends SubsystemBase {
         () -> {
           headingController.reset();
         });
+  }
+
+  /**uses the AutoBuilder to create a Command to move to a position
+   * <p> use this factory instead of manually calling the pathfindToPose fuction from the AutoBuilder
+   */
+  public Command moveToPose(Pose2d targetPose){
+    return AutoBuilder.pathfindToPose(
+      targetPose,
+      new PathConstraints(
+        0.5, 
+        0.5, 
+        Math.PI/2.0, //quarter rotation per second
+        Math.PI/2.0
+      )
+    );
   }
 
   private void setModulesFromRobotRelativeSpeeds(ChassisSpeeds speeds) {
