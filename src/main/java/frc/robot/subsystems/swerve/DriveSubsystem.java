@@ -215,6 +215,7 @@ public class DriveSubsystem extends SubsystemBase {
   /**
    * relative to the drivers station +y is away an +x is to the right
    * <p> see the wpilib coordinate system page, the controller's x and y are wierd
+   * @param onBlueSide controls if this factory returns a command for blue or a command for red, to change the controls for the given team this function will need to be called agian 
    */
   public Command driveFromDriversStation(Supplier<ChassisSpeeds> driversStationRelativeSpeeds, boolean onBlueSide){
     if (onBlueSide){
