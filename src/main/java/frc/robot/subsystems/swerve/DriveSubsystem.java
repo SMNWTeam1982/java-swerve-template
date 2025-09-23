@@ -48,6 +48,8 @@ public class DriveSubsystem extends SubsystemBase {
     public static final double HEADING_PROPORTIONAL_GAIN = 1.0;
     public static final double HEADING_INTEGRAL_GAIN = 0.0;
     public static final double HEADING_DERIVATIVE_GAIN = 0.0;
+    public static final PIDConstants TranslationPIDconstants  = new PIDConstants(5.0, 0.0, 0.0);
+    public static final PIDConstants RotationPIDconstants = new PIDConstants(5.0, 0.0, 0.0);
 
     public static final Translation2d FRONT_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
     public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, -0.2635);
@@ -60,6 +62,8 @@ public class DriveSubsystem extends SubsystemBase {
             FRONT_RIGHT_TRANSLATION,
             REAR_LEFT_TRANSLATION,
             REAR_RIGHT_TRANSLATION);
+
+    
   }
 
 
@@ -173,8 +177,8 @@ public class DriveSubsystem extends SubsystemBase {
         this::getRobotRelativeSpeeds,
         (speeds) -> setModulesFromRobotRelativeSpeeds(speeds),
         new PPHolonomicDriveController(
-            new PIDConstants(5.0, 0.0, 0.0), // Translation PID constants
-            new PIDConstants(5.0, 0.0, 0.0) // Rotation PID constants
+            DriveConstants.TranslationPIDconstants, // Translation PID constants
+            DriveConstants.RotationPIDconstants // Rotation PID constants
             ),
         AutoConstants.PATHPLANNER_CONFIG,
         () -> {
