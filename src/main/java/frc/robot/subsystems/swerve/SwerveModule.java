@@ -9,18 +9,38 @@ import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import frc.robot.Constants.SwerveModuleConstants;
 import org.littletonrobotics.junction.Logger;
 
 /** 
  * this is NOT its own subsystem, this is only an abstraction for the drive subsystem that manages one module
  */
 public class SwerveModule {
+
+  
+  public static class SwerveModuleConstants {
+    public static final double POSITION_TO_METERS_MULTIPLIER = 0.31927 / 6.75;
+    public static final double RPM_TO_MPS_MULTIPLIER = POSITION_TO_METERS_MULTIPLIER / 60;
+
+    public static final double TURN_PROPORTIONL_GAIN = 0.73;
+    public static final double TURN_INTEGRAL_GAIN = 0.0;
+    public static final double TURN_DERIVATIVE_GAIN = 0.01;
+
+    public static final double DRIVE_STATIC_GAIN = 0.05;
+    public static final double DRIVE_VELOCITY_GAIN_SECONDS_PER_METER = 2.87;
+
+    public static final SparkBaseConfig DRIVE_MOTOR_CONFIG =
+        new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
+    public static final SparkBaseConfig TURN_MOTOR_CONFIG =
+        new SparkMaxConfig().smartCurrentLimit(30).idleMode(SparkBaseConfig.IdleMode.kCoast);
+  }
+  
   private SparkMax driveMotor;
   private SparkMax turnMotor;
   private CANcoder turnEncoder;
