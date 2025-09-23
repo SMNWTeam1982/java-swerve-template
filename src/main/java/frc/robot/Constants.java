@@ -69,30 +69,7 @@ public final class Constants {
   }
 
   /** Constants to configure Drivetrain */
-  public static class DriveConstants {
-    public static final double PHYSICAL_MAX_MPS = 3.8;
-
-    public static final double ARTIFICIAL_MAX_MPS = 2.5;
-
-    public static final double DRIVE_PERIOD = TimedRobot.kDefaultPeriod;
-    public static final boolean GYRO_REVERSED = false;
-
-    public static final double HEADING_PROPORTIONAL_GAIN = 1.0;
-    public static final double HEADING_INTEGRAL_GAIN = 0.0;
-    public static final double HEADING_DERIVATIVE_GAIN = 0.0;
-
-    public static final Translation2d FRONT_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, -0.2635);
-    public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(-0.2635, 0.2635);
-    public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(-0.2635, -0.2635);
-
-    public static final SwerveDriveKinematics swerveKinematics =
-        new SwerveDriveKinematics(
-            FRONT_LEFT_TRANSLATION,
-            FRONT_RIGHT_TRANSLATION,
-            REAR_LEFT_TRANSLATION,
-            REAR_RIGHT_TRANSLATION);
-  }
+  
 
   public static class AutoConstants {
     public static final ModuleConfig MODULE_CONFIG =
