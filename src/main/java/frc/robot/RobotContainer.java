@@ -86,7 +86,7 @@ public class RobotContainer {
         () -> {
           return new ChassisSpeeds(
             deadZone(driverController.getLeftX()) * 2,
-            -deadZone(driverController.getLeftY()) * 2,
+            deadZone(driverController.getLeftY()) * 2,
             deadZone(driverController.getRightX()) * Math.PI
           );
         },

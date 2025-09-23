@@ -213,9 +213,10 @@ public class DriveSubsystem extends SubsystemBase {
         });
   }
   /**
-   * relative to the drivers station +y is away an +x is to the right
+   * relative to the drivers station -y is away an +x is to the right, this is so you can just multiply the joystick output by the desired speed
    * <p> see the wpilib coordinate system page, the controller's x and y are wierd
-   * @param onBlueSide controls if this factory returns a command for blue or a command for red, to change the controls for the given team this function will need to be called agian 
+   * <p> up on a joystick is -y and right on a joystick is +x
+   * @param onBlueSide controls if this factory returns a command for blue or a command for red, to change the controls this function will need to be called agian 
    */
   public Command driveFromDriversStation(Supplier<ChassisSpeeds> driversStationRelativeSpeeds, boolean onBlueSide){
     if (onBlueSide){
@@ -223,7 +224,7 @@ public class DriveSubsystem extends SubsystemBase {
         () -> {
           ChassisSpeeds driversSpeeds = driversStationRelativeSpeeds.get();
           ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
-          fieldRelativeSpeeds.vxMetersPerSecond = driversSpeeds.vyMetersPerSecond;
+          fieldRelativeSpeeds.vxMetersPerSecond = -driversSpeeds.vyMetersPerSecond;
           fieldRelativeSpeeds.vyMetersPerSecond = -driversSpeeds.vxMetersPerSecond;
           fieldRelativeSpeeds.omegaRadiansPerSecond = driversSpeeds.omegaRadiansPerSecond;
 
@@ -235,7 +236,7 @@ public class DriveSubsystem extends SubsystemBase {
         () -> {
           ChassisSpeeds driversSpeeds = driversStationRelativeSpeeds.get();
           ChassisSpeeds fieldRelativeSpeeds = new ChassisSpeeds();
-          fieldRelativeSpeeds.vxMetersPerSecond = -driversSpeeds.vyMetersPerSecond;
+          fieldRelativeSpeeds.vxMetersPerSecond = driversSpeeds.vyMetersPerSecond;
           fieldRelativeSpeeds.vyMetersPerSecond = driversSpeeds.vxMetersPerSecond;
           fieldRelativeSpeeds.omegaRadiansPerSecond = driversSpeeds.omegaRadiansPerSecond;
 
@@ -284,6 +285,10 @@ public class DriveSubsystem extends SubsystemBase {
     );
   }
 
+  /**
+   * calculates the needed module states and normalizes the wheel velocities
+   * <p> this will automatically slow down the speed to one that is possible by the swerve drive modules
+   */
   private void setModulesFromRobotRelativeSpeeds(ChassisSpeeds speeds) {
     ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
     SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
@@ -309,7 +314,6 @@ public class DriveSubsystem extends SubsystemBase {
 
   /** gets the estimated position from the pose estimator.
    * <p>this returns the same thing per call
-   * @return
   */
   public Pose2d getEstimatedPose() {
     return swervePoseEstimator.getEstimatedPosition();
@@ -344,9 +348,7 @@ public class DriveSubsystem extends SubsystemBase {
   public ChassisSpeeds getRobotRelativeSpeeds() {
     return DriveConstants.swerveKinematics.toChassisSpeeds(getModuleStates());
   }
-
   
-
   /**
    * @return robot relative linear velocity in meters per second
    */
