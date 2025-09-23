@@ -27,11 +27,15 @@ public class SwerveModule {
   public static class SwerveModuleConstants {
     public static final double POSITION_TO_METERS_MULTIPLIER = 0.31927 / 6.75;
     public static final double RPM_TO_MPS_MULTIPLIER = POSITION_TO_METERS_MULTIPLIER / 60;
-
+    /** 
+     * PID constants for the turn motor  
+     */
     public static final double TURN_PROPORTIONL_GAIN = 0.73;
     public static final double TURN_INTEGRAL_GAIN = 0.0;
     public static final double TURN_DERIVATIVE_GAIN = 0.01;
-
+    /** 
+     * Constant speed for the drive motor 
+     */
     public static final double DRIVE_STATIC_GAIN = 0.05;
     public static final double DRIVE_VELOCITY_GAIN_SECONDS_PER_METER = 2.87;
 
