@@ -50,27 +50,6 @@ public final class Constants {
     public static final boolean REPLAY_LOGS = false;
   }
 
-  /** Constants to configure Swerve Modules */
-  public static class SwerveModuleConstants {
-    public static final double POSITION_TO_METERS_MULTIPLIER = 0.31927 / 6.75;
-    public static final double RPM_TO_MPS_MULTIPLIER = POSITION_TO_METERS_MULTIPLIER / 60;
-
-    public static final double TURN_PROPORTIONL_GAIN = 0.73;
-    public static final double TURN_INTEGRAL_GAIN = 0.0;
-    public static final double TURN_DERIVATIVE_GAIN = 0.01;
-
-    public static final double DRIVE_STATIC_GAIN = 0.05;
-    public static final double DRIVE_VELOCITY_GAIN_SECONDS_PER_METER = 2.87;
-
-    public static final SparkBaseConfig DRIVE_MOTOR_CONFIG =
-        new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-    public static final SparkBaseConfig TURN_MOTOR_CONFIG =
-        new SparkMaxConfig().smartCurrentLimit(30).idleMode(SparkBaseConfig.IdleMode.kCoast);
-  }
-
-  /** Constants to configure Drivetrain */
-
-
   public static class AutoConstants {
     public static final ModuleConfig MODULE_CONFIG =
         new ModuleConfig(0.048, DriveConstants.ARTIFICIAL_MAX_MPS, 1.200, DCMotor.getNEO(1), 50, 1);
