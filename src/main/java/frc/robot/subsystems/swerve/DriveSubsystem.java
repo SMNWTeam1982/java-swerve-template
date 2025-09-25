@@ -6,7 +6,9 @@ package frc.robot.subsystems.swerve;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.util.PathPlannerLogging;
@@ -19,6 +21,9 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.units.measure.Mass;
+import edu.wpi.first.units.measure.MomentOfInertia;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -27,17 +32,18 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.AutoConstants;
 import frc.robot.subsystems.vision.VisionData;
 import frc.robot.subsystems.vision.VisionSubsystem;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
+import static  edu.wpi.first.units.Units.Kilogram;
+import static edu.wpi.first.units.Units.KilogramSquareMeters;
 
 /** Command-Based Drivetrain subsytem for Swerve Drive */
 public class DriveSubsystem extends SubsystemBase {
-    public static class DriveConstants {
+  public static class DriveConstants {
     public static final double PHYSICAL_MAX_MPS = 3.8;
 
     public static final double ARTIFICIAL_MAX_MPS = 2.5;
@@ -56,14 +62,31 @@ public class DriveSubsystem extends SubsystemBase {
     public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(-0.2635, 0.2635);
     public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(-0.2635, -0.2635);
 
-    public static final SwerveDriveKinematics swerveKinematics =
-        new SwerveDriveKinematics(
-            FRONT_LEFT_TRANSLATION,
-            FRONT_RIGHT_TRANSLATION,
-            REAR_LEFT_TRANSLATION,
-            REAR_RIGHT_TRANSLATION);
+    public static final SwerveDriveKinematics swerveKinematics = new SwerveDriveKinematics(
+      FRONT_LEFT_TRANSLATION,
+      FRONT_RIGHT_TRANSLATION,
+      REAR_LEFT_TRANSLATION,
+      REAR_RIGHT_TRANSLATION
+    );
+  }
 
-    
+  public static class PathPlannerConstants {
+    public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(
+      0.048, 
+      DriveConstants.ARTIFICIAL_MAX_MPS, 
+      1.200, DCMotor.getNEO(1), 
+      30, 
+      1
+    );
+    public static final Translation2d[] MODULE_OFFSETS = new Translation2d[] {
+      DriveConstants.FRONT_LEFT_TRANSLATION,
+      DriveConstants.FRONT_RIGHT_TRANSLATION,
+      DriveConstants.REAR_LEFT_TRANSLATION,
+      DriveConstants.REAR_RIGHT_TRANSLATION
+    };
+    public static final Mass ROBOT_MASS = Kilogram.of(44.49741);
+    public static final MomentOfInertia ROBOT_MOMENT_OF_INERTIA = KilogramSquareMeters.of(36.038);
+    public static final RobotConfig PATHPLANNER_CONFIG = new RobotConfig(ROBOT_MASS, ROBOT_MOMENT_OF_INERTIA, MODULE_CONFIG, MODULE_OFFSETS);
   }
 
 
@@ -172,24 +195,24 @@ public class DriveSubsystem extends SubsystemBase {
     // the AutoBuilder will generate commands for us that follow a given trajectory.
     // the Commands it generates require a lot of complicated inputs so we supply these to the AutoBuilder and it will input those automatically
     AutoBuilder.configure(
-        this::getEstimatedPose,
-        (pose) -> {}, // we pass in a dummy function because we are getting absolute position from vision data
-        this::getRobotRelativeSpeeds,
-        (speeds) -> setModulesFromRobotRelativeSpeeds(speeds),
-        new PPHolonomicDriveController(
-            DriveConstants.TranslationPIDconstants, // Translation PID constants
-            DriveConstants.RotationPIDconstants // Rotation PID constants
-            ),
-        AutoConstants.PATHPLANNER_CONFIG,
-        () -> {
-          var alliance = DriverStation.getAlliance();
-          if (alliance.isPresent()) {
-            return alliance.get() == DriverStation.Alliance.Red;
-          }
-          return false;
-        },
-        this // a reference to this subsystem
-        );
+      this::getEstimatedPose,
+      (pose) -> {}, // we pass in a dummy function because we are getting absolute position from vision data
+      this::getRobotRelativeSpeeds,
+      (speeds) -> setModulesFromRobotRelativeSpeeds(speeds),
+      new PPHolonomicDriveController(
+        DriveConstants.TranslationPIDconstants, // Translation PID constants
+        DriveConstants.RotationPIDconstants // Rotation PID constants
+      ),
+      PathPlannerConstants.PATHPLANNER_CONFIG,
+      () -> {
+        var alliance = DriverStation.getAlliance();
+        if (alliance.isPresent()) {
+          return alliance.get() == DriverStation.Alliance.Red;
+        }
+        return false;
+      },
+      this // a reference to this subsystem
+    );
   }
 
   /** Resets the pose estimator to the specified pose. 

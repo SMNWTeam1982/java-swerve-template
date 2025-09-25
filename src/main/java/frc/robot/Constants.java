@@ -50,22 +50,6 @@ public final class Constants {
     public static final boolean REPLAY_LOGS = false;
   }
 
-  public static class AutoConstants {
-    public static final ModuleConfig MODULE_CONFIG =
-        new ModuleConfig(0.048, DriveConstants.ARTIFICIAL_MAX_MPS, 1.200, DCMotor.getNEO(1), 50, 1);
-    public static final Translation2d[] MODULE_OFFSETS =
-        new Translation2d[] {
-          DriveConstants.FRONT_LEFT_TRANSLATION,
-          DriveConstants.FRONT_RIGHT_TRANSLATION,
-          DriveConstants.REAR_LEFT_TRANSLATION,
-          DriveConstants.REAR_RIGHT_TRANSLATION
-        };
-    public static final Mass ROBOT_MASS = Kilogram.of(44.49741);
-    public static final MomentOfInertia ROBOT_MOMENT_OF_INERTIA = KilogramSquareMeters.of(36.038);
-    public static final RobotConfig PATHPLANNER_CONFIG =
-        new RobotConfig(ROBOT_MASS, ROBOT_MOMENT_OF_INERTIA, MODULE_CONFIG, MODULE_OFFSETS);
-  }
-
   /** Constants to configure QuestNav and PhotonLib vision sources */
   public static class VisionConstants {
     public static final String PHOTON_CAMERA_NAME = "limelight-front";
