@@ -74,7 +74,8 @@ public class DriveSubsystem extends SubsystemBase {
     public static final ModuleConfig MODULE_CONFIG = new ModuleConfig(
       0.048, 
       DriveConstants.ARTIFICIAL_MAX_MPS, 
-      1.200, DCMotor.getNEO(1), 
+      1.200, 
+      DCMotor.getNEO(1), 
       30, 
       1
     );
@@ -267,7 +268,8 @@ public class DriveSubsystem extends SubsystemBase {
         });
   }
   /**
-   * relative to the drivers station -y is away an +x is to the right, this is so you can just multiply the joystick output by the desired speed
+   * this lets you just plop in the joystick x and y values. without having to worry about messing with them
+   * <p> relative to the drivers station -y is away an +x is to the right, this is so you can just multiply the joystick output by the desired speed
    * <p> see the wpilib coordinate system page, the controller's x and y are wierd
    * <p> up on a joystick is -y and right on a joystick is +x
    * @param onBlueSide controls if this factory returns a command for blue or a command for red, to change the controls this function will need to be called agian 
