@@ -48,17 +48,17 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   @SuppressWarnings("unused")
   public RobotContainer() {
-    Command testAuto = AutoBuilder.pathfindToPose(
-      new Pose2d(5.0,5.0,new Rotation2d()),
-      new PathConstraints(
-        0.5, 
-        0.5, 
-        Math.PI/2.0, //quarter rotation per second
-        Math.PI/2.0
-      )
-    );
-    autoChooser = new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
-    autoChooser.addOption("testAuto",testAuto);
+    Command testAuto =
+        AutoBuilder.pathfindToPose(
+            new Pose2d(5.0, 5.0, new Rotation2d()),
+            new PathConstraints(
+                0.5,
+                0.5,
+                Math.PI / 2.0, // quarter rotation per second
+                Math.PI / 2.0));
+    autoChooser =
+        new LoggedDashboardChooser<>("Selected Auto Routine", AutoBuilder.buildAutoChooser());
+    autoChooser.addOption("testAuto", testAuto);
     // Configure the trigger bindings
     configureDriverBindings();
     configureOperatorBindings();
@@ -72,33 +72,37 @@ public class RobotContainer {
    * CommandXboxController Xbox}/{@link edu.wpi.first.wpilibj2.command.button.CommandPS4Controller
    * PS4} controllers or {@link edu.wpi.first.wpilibj2.command.button.CommandJoystick Flight
    * joysticks}.
-   * <p> see the wpilib page on coordinates and joystick coordinates
+   *
+   * <p>see the wpilib page on coordinates and joystick coordinates
    */
   private void configureDriverBindings() {
     var alliance = DriverStation.getAlliance();
     boolean onBlueSide = true; // default to blue mode
-    if (alliance.isPresent()){
+    if (alliance.isPresent()) {
       onBlueSide = alliance.get() == Alliance.Blue;
     }
 
     driveSubsystem.setDefaultCommand(
-      driveSubsystem.driveFromDriversStation(
-        () -> {
-          return new ChassisSpeeds(
-            deadZone(driverController.getLeftX()) * 2,
-            deadZone(driverController.getLeftY()) * 2,
-            deadZone(driverController.getRightX()) * Math.PI
-          );
-        },
-        onBlueSide
-      )
-    );
+        driveSubsystem.driveFromDriversStation(
+            () -> {
+              return new ChassisSpeeds(
+                  deadZone(driverController.getLeftX()) * 2,
+                  deadZone(driverController.getLeftY()) * 2,
+                  deadZone(driverController.getRightX()) * Math.PI);
+            },
+            onBlueSide));
 
     // a dummy command for snapping to a pose
-    driverController.y().debounce(0.01).whileTrue(driveSubsystem.moveToPose(new Pose2d(5,5,new Rotation2d())));
+    driverController
+        .y()
+        .debounce(0.01)
+        .whileTrue(driveSubsystem.moveToPose(new Pose2d(5, 5, new Rotation2d())));
 
     // resets heading when button is released
-    driverController.a().debounce(0.01).onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
+    driverController
+        .a()
+        .debounce(0.01)
+        .onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
   }
 
   private void configureOperatorBindings() {}

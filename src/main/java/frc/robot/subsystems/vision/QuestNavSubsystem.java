@@ -1,22 +1,16 @@
 package frc.robot.subsystems.vision;
 
-import com.ctre.phoenix6.Utils;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.Constants.VisionConstants;
+import gg.questnav.questnav.PoseFrame;
 import gg.questnav.questnav.QuestNav;
+import java.util.Optional;
 
 /** Implements a Vision Subsystem for QuestNav */
 public class QuestNavSubsystem extends VisionSubsystem {
   public QuestNav quest = new QuestNav();
-
-  /**
-   * Constructs a new QuestNav Subsystem instance
-   *
-   * @param name The name of the QuestNav instance
-   */
-  public QuestNavSubsystem(String name) {
-    super(name);
-  }
 
   @Override
   public void periodic() {
@@ -24,13 +18,32 @@ public class QuestNavSubsystem extends VisionSubsystem {
     super.periodic();
   }
 
-  /**
-   * Gets the estimated pose of the robot based on the headset position
-   *
-   * @return The estimated robot pose as a {@link Pose2d} object
-   */
-  public Pose2d getEstimatedPose() {
-    return quest.getPose().transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT.inverse());
+  public String getName() {
+    return "quest nav";
+  }
+
+  @Override
+  public Command zeroHeading() {
+    return runOnce(() -> {});
+  }
+
+  protected Optional<VisionData> getVisionResult() {
+    Optional<PoseFrame> lastEstimatedPose = Optional.empty();
+    PoseFrame[] poseFrames = quest.getAllUnreadPoseFrames();
+
+    if (poseFrames.length > 0) {
+      lastEstimatedPose = Optional.of(poseFrames[poseFrames.length - 1]);
+    }
+
+    if (lastEstimatedPose.isEmpty()) {
+      return Optional.empty();
+    }
+
+    return Optional.of(
+        new VisionData(
+            lastEstimatedPose.get().questPose(),
+            lastEstimatedPose.get().dataTimestamp(),
+            Constants.VisionConstants.QUESTNAV_CAM_VISION_TRUST));
   }
 
   /**
@@ -46,21 +59,13 @@ public class QuestNavSubsystem extends VisionSubsystem {
   }
 
   /**
-   * Method providing the timestamp of the current pose estimate
-   *
-   * @return FPGA timebase formatted timestamp in seconds
-   */
-  public double getTimestamp() {
-    return Utils.fpgaToCurrentTime(quest.getDataTimestamp());
-  }
-
-  /**
    * Resets the Quest headset position to the specified pose.
    *
    * @param pose The desired pose as as a {@link Pose2d} Object
    */
-  public void resetPose(Pose2d pose) {
+  public Command resetPose(Pose2d pose) {
     Pose2d questPose = pose.transformBy(VisionConstants.QUESTNAV_CAM_RELATIVE_TO_ROBOT);
     quest.setPose(questPose);
+    return runOnce(() -> {});
   }
 }
