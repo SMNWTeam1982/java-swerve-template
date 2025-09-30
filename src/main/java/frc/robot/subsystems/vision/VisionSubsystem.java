@@ -70,7 +70,8 @@ public abstract class VisionSubsystem extends SubsystemBase {
   }
 
   /**
-   * it is NOT safe to call this multiple times per loop, only call it once per periodic loop. if
+   * this is the function that gets the results from the hardware, the hardware may not have any results so return type is an optional
+   * <p>it is NOT safe to call this multiple times per loop, only call it once per periodic loop. if
    * the vision system being used cannot get its position this will return an empty optional
    */
   protected abstract Optional<VisionData> getVisionResult();
