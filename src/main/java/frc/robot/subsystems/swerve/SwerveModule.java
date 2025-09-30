@@ -16,10 +16,10 @@ import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import org.littletonrobotics.junction.Logger;
 
-/** 
- * this is NOT its own subsystem, this is only an abstraction for the drive subsystem that manages one module
+/**
+ * this is NOT its own subsystem, this is only an abstraction for the drive subsystem that manages
+ * one module
  */
 public class SwerveModule {
 
@@ -27,18 +27,22 @@ public class SwerveModule {
   public static class SwerveModuleConstants {
     /** a number that is measured every year */
     public static final double POSITION_TO_METERS_MULTIPLIER = 0.31927 / 6.75;
+
     public static final double RPM_TO_MPS_MULTIPLIER = POSITION_TO_METERS_MULTIPLIER / 60;
 
     /** proportional constant for the turn motor */
     public static final double TURN_PROPORTIONL_GAIN = 0.73;
+
     /** integral constant for the turn motor */
     public static final double TURN_INTEGRAL_GAIN = 0.0;
+
     /** derivative constant for the turn motor */
     public static final double TURN_DERIVATIVE_GAIN = 0.01;
 
     /** the minimum value that the drive motor has to be set to before it can move */
     public static final double DRIVE_STATIC_GAIN = 0.05;
-    /** multiplier that converts a velocity to a voltage to feed to the drive motor*/
+
+    /** multiplier that converts a velocity to a voltage to feed to the drive motor */
     public static final double DRIVE_VELOCITY_GAIN_VOLT_SECONDS_PER_METER = 2.87;
 
     public static final SparkBaseConfig DRIVE_MOTOR_CONFIG =
@@ -46,7 +50,7 @@ public class SwerveModule {
     public static final SparkBaseConfig TURN_MOTOR_CONFIG =
         new SparkMaxConfig().smartCurrentLimit(30).idleMode(SparkBaseConfig.IdleMode.kCoast);
   }
-  
+
   private final SparkMax driveMotor;
   private final SparkMax turnMotor;
   private final CANcoder turnEncoder;
@@ -57,9 +61,7 @@ public class SwerveModule {
   /** see the wpilib docs on Feedforward */
   private final SimpleMotorFeedforward driveFeedforward;
 
-  /**
-   * Constructs an instance of a SwerveModule with a drive motor, turn motor, and turn encoder.
-   */
+  /** Constructs an instance of a SwerveModule with a drive motor, turn motor, and turn encoder. */
   public SwerveModule(int driveMotorCANID, int turnMotorCANID, int encoderCANID) {
     driveMotor = new SparkMax(driveMotorCANID, MotorType.kBrushless);
     driveMotor.configure(
@@ -89,7 +91,9 @@ public class SwerveModule {
     turnPIDController.enableContinuousInput(-Math.PI, Math.PI);
   }
 
-  /** takes the given state and optimizes it, then sets the motors to move towards the state
+  /**
+   * takes the given state and optimizes it, then sets the motors to move towards the state
+   *
    * <p>this has to be called every frame in order to update work
    */
   public void setDesiredState(SwerveModuleState desiredState) {
@@ -114,7 +118,8 @@ public class SwerveModule {
       driveOutput = 0.0;
     }
 
-    double turnOutput = -turnPIDController.calculate(encoderRotation.getRadians(), desiredState.angle.getRadians());
+    double turnOutput =
+        -turnPIDController.calculate(encoderRotation.getRadians(), desiredState.angle.getRadians());
 
     // these are needed, the pid output has no max value
     if (turnOutput > 1.0) {
@@ -124,8 +129,9 @@ public class SwerveModule {
       turnOutput = -1.0;
     }
 
-    //Logger.recordOutput("Turn Value", turnOutput); this name is not unique for each module, velocity data is going to be logged in the drivetrain
-    
+    // Logger.recordOutput("Turn Value", turnOutput); this name is not unique for each module,
+    // velocity data is going to be logged in the drivetrain
+
     driveMotor.setVoltage(driveOutput);
     turnMotor.set(turnOutput);
   }
