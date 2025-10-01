@@ -6,19 +6,31 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Elevator extends SubsystemBase{
     private final SparkMax leadMotor;
-    private SparkMax followingMotor;
+    private final SparkMax followingMotor;
     private final RelativeEncoder leadEncoder;
     private final RelativeEncoder followingEncoder;
-    // The current limit is temporary
-    public final SparkBaseConfig LEAD_MOTOR_CONFIG =
-        new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-        public final SparkBaseConfig FOLLOWING_MOTOR_CONFIG =
-        (new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast)).inverted(true);
+    private final PIDController altitudePidController;
 
+    // using the python code base pid values. 
+    private final double ALTITUDE_PROPORTIONAL_GAIN = 5;
+    private final double ALTITUDE_INTERGRAL_GAIN = 0;
+    private final double ALTITUDE_DERIVATIVE_GAIN = 0;
+
+    private final double ELEVATOR_HEIGHT_OFFSET = 0.56256;
+    private final double ELEVATOR_MAX_HEIGHT_METERS = 1.81;
+    private final double IDLE_TARGET_HEIGHT = 0.6;
+
+    // The current limit is temporary
+    private final SparkBaseConfig LEAD_MOTOR_CONFIG =
+        new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
+    private final SparkBaseConfig FOLLOWING_MOTOR_CONFIG =
+        (new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast)).inverted(true);
+    private final double MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER = 1.24744 / 110.5728;
     public Elevator() {
         leadMotor = new SparkMax(10, SparkMax.MotorType.kBrushless);
         followingMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
@@ -37,13 +49,26 @@ public class Elevator extends SubsystemBase{
         leadEncoder = leadMotor.getEncoder();
         followingEncoder = followingMotor.getEncoder();
         zeroEncoders();
-        
-    }
 
+        altitudePidController = new PIDController(ALTITUDE_PROPORTIONAL_GAIN, ALTITUDE_INTERGRAL_GAIN, ALTITUDE_DERIVATIVE_GAIN);
+        altitudePidController.setTolerance(0.01);
+
+
+    }
 
     public void zeroEncoders() {
         leadEncoder.setPosition(0);
         followingEncoder.setPosition(0);
+    }
+
+    public double getElevatorHeight() {
+        double position = leadEncoder.getPosition();
+        return position * MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER;
+    }
+
+    public void stopMotors() {
+        leadMotor.set(0);
+        followingMotor.set(0);
     }
 
     @Override
