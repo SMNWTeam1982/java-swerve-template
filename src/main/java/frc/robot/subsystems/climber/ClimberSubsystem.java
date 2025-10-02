@@ -21,5 +21,16 @@ public class ClimberSubsystem extends SubsystemBase{
             }
         );
     }
+
+    public Command moveClimberIn() {
+        return runEnd(
+            () -> {
+                climberMotor.set(-0.1);
+            },
+            () -> {
+                climberMotor.set(0.0);
+            }
+        );
+    }
 }
    
