@@ -1,5 +1,6 @@
 package frc.robot.subsystems.Wrist;
 
+import edu.wpi.first.math.proto.Wpimath;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkMax;
@@ -20,12 +21,12 @@ public class Wrist extends SubsystemBase{
     new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
 
     public Wrist() {
-        pivotMotor = new SparkMax(10, SparkMax.MotorType.kBrushless); // initilizes pivot otor 
+        pivotMotor = new SparkMax(30, SparkMax.MotorType.kBrushless); // initilizes pivot otor 
         pivotMotor.configure(PIVOT_MOTOR_CONFIG, 
         SparkBase.ResetMode.kResetSafeParameters, 
         SparkBase.PersistMode.kPersistParameters);
         
-        intakeMotor = new SparkMax(10, SparkMax.MotorType.kBrushless); // initilizes intake motor 
+        intakeMotor = new SparkMax(15, SparkMax.MotorType.kBrushless); // initilizes intake motor 
         intakeMotor.configure(PIVOT_MOTOR_CONFIG, 
         SparkBase.ResetMode.kResetSafeParameters, 
         SparkBase.PersistMode.kPersistParameters);
@@ -36,6 +37,12 @@ public class Wrist extends SubsystemBase{
         intakeMotorEncoder.setPosition(0);
     }    
 
+    public static class WristMotorConstants{
+      public static final LEVEL_1_CORAL_WRIST_POSITION = wpimath.geometry.Rotation2d.fromDegrees(0);
+      public static final LEVEL_MID_CORAL_WRIST_POSITION = wpimath.geometry.Rotation2d.fromDegrees(-15);
+      public static final LEVEL_4_CORAL_WRIST_POSITION = wpimath.geometry.Rotation2d.fromDegrees(0);
+      public static final INTAKE_CORAL_WRIST_POSITION = wpimath.geometry.Rotation2d.fromDegrees(35);
+    }
     public Command runMotors() {
         return runOnce(
         () -> {
