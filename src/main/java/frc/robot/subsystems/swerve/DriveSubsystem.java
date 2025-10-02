@@ -13,7 +13,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
@@ -21,47 +20,19 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.util.sendable.Sendable;
 import edu.wpi.first.util.sendable.SendableBuilder;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.AutoConstants;
+import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
 import frc.robot.subsystems.vision.QuestNavSubsystem;
 import org.littletonrobotics.junction.Logger;
 
-
-
 /** Command-Based Drivetrain subsytem for Swerve Drive */
 public class DriveSubsystem extends SubsystemBase {
-  public static class DriveConstants {
-    public static final double PHYSICAL_MAX_MPS = 3.8;
-
-    public static final double ARTIFICIAL_MAX_MPS = 2.5;
-
-    public static final double DRIVE_PERIOD = TimedRobot.kDefaultPeriod;
-    public static final boolean GYRO_REVERSED = false;
-
-    public static final double HEADING_PROPORTIONAL_GAIN = 1.0;
-    public static final double HEADING_INTEGRAL_GAIN = 0.0;
-    public static final double HEADING_DERIVATIVE_GAIN = 0.0;
-
-    public static final Translation2d FRONT_LEFT_TRANSLATION = new Translation2d(0.2635, 0.2635);
-    public static final Translation2d FRONT_RIGHT_TRANSLATION = new Translation2d(0.2635, -0.2635);
-    public static final Translation2d REAR_LEFT_TRANSLATION = new Translation2d(-0.2635, 0.2635);
-    public static final Translation2d REAR_RIGHT_TRANSLATION = new Translation2d(-0.2635, -0.2635);
-
-    public static final SwerveDriveKinematics swerveKinematics =
-        new SwerveDriveKinematics(
-            FRONT_LEFT_TRANSLATION,
-            FRONT_RIGHT_TRANSLATION,
-            REAR_LEFT_TRANSLATION,
-            REAR_RIGHT_TRANSLATION);
-  }
-
-
   private final SwerveModule frontLeft = new SwerveModule(7, 8, 4);
   private final SwerveModule frontRight = new SwerveModule(1, 2, 3);
   private final SwerveModule rearLeft = new SwerveModule(5, 4, 1);
