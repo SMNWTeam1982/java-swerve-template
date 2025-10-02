@@ -35,8 +35,8 @@ public class Elevator extends SubsystemBase{
         (new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast)).inverted(true);
     private final double MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER = 1.24744 / 110.5728;
     public Elevator() {
-        leadMotor = new SparkMax(10, SparkMax.MotorType.kBrushless);
-        followingMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
+        leadMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
+        followingMotor = new SparkMax(12, SparkMax.MotorType.kBrushless);
         followingMotor.configure(
             FOLLOWING_MOTOR_CONFIG,
             SparkBase.ResetMode.kResetSafeParameters,
