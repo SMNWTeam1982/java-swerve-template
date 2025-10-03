@@ -1,6 +1,5 @@
 package frc.robot.subsystems.swerve;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
