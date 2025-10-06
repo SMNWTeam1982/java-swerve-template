@@ -391,6 +391,7 @@ public class DriveSubsystem extends SubsystemBase {
    * modules
    */
   private void setModulesFromRobotRelativeSpeeds(ChassisSpeeds speeds) {
+    Logger.recordOutput("final robot relative speeds", speeds);
     ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
     SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
