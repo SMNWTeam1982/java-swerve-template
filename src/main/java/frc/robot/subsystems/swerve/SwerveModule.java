@@ -142,6 +142,12 @@ public class SwerveModule {
     driveMotor.set(0);
   }
 
+  /** a method that can directly run the motors for debuging reasons */
+  public void runMotors(double driveAmount, double turnAmount){
+    driveMotor.set(driveAmount);
+    turnMotor.set(turnAmount);
+  }
+
   /**
    * Updates the Turn motor PID
    *

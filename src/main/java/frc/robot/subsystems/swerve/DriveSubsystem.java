@@ -356,6 +356,34 @@ public class DriveSubsystem extends SubsystemBase {
             Math.PI / 2.0));
   }
 
+  /** a command for debugging a specific module 
+   * @param moduleIndex 0 = fl, 1 = fr, 2 = bl, 3 = br
+   * @param driveAmount 0.0-1.0 scale for setting the motor
+   * @param turnAmount 0.0-1.0 scale for setting the motor
+  */
+  public Command debugModule(
+    int moduleIndex,
+    DoubleSupplier driveAmount,
+    DoubleSupplier turnAmount
+  ){
+    return run(
+      () -> {
+        if (moduleIndex == 0){
+          frontLeft.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+        if (moduleIndex == 1){
+          frontRight.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+        if (moduleIndex == 2){
+          backLeft.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+        if (moduleIndex == 3){
+          backRight.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+      }
+    );
+  }
+
   /**
    * calculates the needed module states and normalizes the wheel velocities
    *
@@ -430,7 +458,7 @@ public class DriveSubsystem extends SubsystemBase {
   /**
    * @return robot relative linear velocity in meters per second
    */
-  private double getLinearVelocity() {
+  public double getLinearVelocity() {
     ChassisSpeeds relativeSpeeds = getRobotRelativeSpeeds();
     return Math.hypot(relativeSpeeds.vxMetersPerSecond, relativeSpeeds.vyMetersPerSecond);
   }
