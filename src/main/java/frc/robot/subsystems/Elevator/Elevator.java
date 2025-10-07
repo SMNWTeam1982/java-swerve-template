@@ -13,39 +13,57 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Elevator extends SubsystemBase{
+    public static class ElevatorConstants {
+        public final static double LEVEL_1_TARGET_HEIGHT = 0.61;
+        public final static double LEVEL_2_TARGET_HEIGHT = 0.9; //#1.05 # change
+        public final static double LEVEL_3_TARGET_HEIGHT = 1.3; //#1.268
+        public final static double LEVEL_4_TARGET_HEIGHT = 1.8;
+
+        public final static double ALGAE_2_TARGET_HEIGHT = 1.2;
+
+        public final static double PROCESSOR_TARGET_HEIGHT = 0.6;
+
+        public final static double INTAKING_TARGET_HEIGHT = 0.78;
+
+
+        // using the python code base pid values. 
+        public final static double ALTITUDE_PROPORTIONAL_GAIN = 5;
+        public final static double ALTITUDE_INTERGRAL_GAIN = 0;
+        public final static double ALTITUDE_DERIVATIVE_GAIN = 0;
+
+        public final static double ELEVATOR_HEIGHT_OFFSET = 0.56256;
+        public final static double ELEVATOR_MAX_HEIGHT_METERS = 1.81;
+        public final static double IDLE_TARGET_HEIGHT = 0.6;
+
+        // The current limit is temporary
+        public final static  SparkBaseConfig LEAD_MOTOR_CONFIG =
+            new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
+        public final static SparkBaseConfig FOLLOWING_MOTOR_CONFIG =
+            (new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast)).inverted(true);
+        public final static double MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER = 1.24744 / 110.5728;
+
+
+    }
+
+
     private final SparkMax leadMotor;
     private final SparkMax followingMotor;
     private final RelativeEncoder leadEncoder;
     private final RelativeEncoder followingEncoder;
     private final PIDController altitudePidController;
 
-    // using the python code base pid values. 
-    private final double ALTITUDE_PROPORTIONAL_GAIN = 5;
-    private final double ALTITUDE_INTERGRAL_GAIN = 0;
-    private final double ALTITUDE_DERIVATIVE_GAIN = 0;
-
-    private final double ELEVATOR_HEIGHT_OFFSET = 0.56256;
-    private final double ELEVATOR_MAX_HEIGHT_METERS = 1.81;
-    private final double IDLE_TARGET_HEIGHT = 0.6;
-
-    // The current limit is temporary
-    private final SparkBaseConfig LEAD_MOTOR_CONFIG =
-        new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-    private final SparkBaseConfig FOLLOWING_MOTOR_CONFIG =
-        (new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast)).inverted(true);
-    private final double MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER = 1.24744 / 110.5728;
-    public Elevator() {
-        leadMotor = new SparkMax(10, SparkMax.MotorType.kBrushless);
-        followingMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
+        public Elevator() {
+        leadMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
+        followingMotor = new SparkMax(12, SparkMax.MotorType.kBrushless);
         followingMotor.configure(
-            FOLLOWING_MOTOR_CONFIG,
+            ElevatorConstants.FOLLOWING_MOTOR_CONFIG,
             SparkBase.ResetMode.kResetSafeParameters,
             SparkBase.PersistMode.kPersistParameters
         );
         // inverted following motor in the config in the FOLLOWING_MOTOR_CONFIG init.
-        LEAD_MOTOR_CONFIG.follow(followingMotor);
+        ElevatorConstants.LEAD_MOTOR_CONFIG.follow(followingMotor);
         leadMotor.configure(
-            LEAD_MOTOR_CONFIG,
+            ElevatorConstants.LEAD_MOTOR_CONFIG,
             SparkBase.ResetMode.kResetSafeParameters,
             SparkBase.PersistMode.kPersistParameters
         );
@@ -53,7 +71,7 @@ public class Elevator extends SubsystemBase{
         followingEncoder = followingMotor.getEncoder();
         zeroEncoders();
 
-        altitudePidController = new PIDController(ALTITUDE_PROPORTIONAL_GAIN, ALTITUDE_INTERGRAL_GAIN, ALTITUDE_DERIVATIVE_GAIN);
+        altitudePidController = new PIDController(ElevatorConstants.ALTITUDE_PROPORTIONAL_GAIN, ElevatorConstants.ALTITUDE_INTERGRAL_GAIN, ElevatorConstants.ALTITUDE_DERIVATIVE_GAIN);
         altitudePidController.setTolerance(0.01);
 
 
@@ -69,19 +87,24 @@ public class Elevator extends SubsystemBase{
 
     public double getElevatorHeight() {
         double position = leadEncoder.getPosition();
-        return position * MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER;
+        return position * ElevatorConstants.MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER;
     }
 
-    public Command moveToHeight(Supplier<Double> doubleSupplier) {
-        return runEnd(() -> {
+    public Command moveToHeight() {
+        return run(() -> {
             double currentHeight = getElevatorHeight();
-            double pidOutput = altitudePidController.calculate(currentHeight, doubleSupplier.get());
+            double pidOutput = altitudePidController.calculate(currentHeight);
             // Clamp the output to be between -1 and 1
             pidOutput = Math.max(-1, Math.min(1, pidOutput));
             leadMotor.set(pidOutput);
-        }, () -> {
-            stopMotors();
-          }).until(() -> altitudePidController.atSetpoint() || getElevatorHeight() >= ELEVATOR_MAX_HEIGHT_METERS);
+        });
+    }
+
+    public Command elevatorSetState(double target) {
+        return runOnce(() -> {
+            altitudePidController.setSetpoint(target);
+
+        });
     }
 
     public Command stopMotors() {

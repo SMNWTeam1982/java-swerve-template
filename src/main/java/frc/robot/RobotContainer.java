@@ -93,14 +93,14 @@ public class RobotContainer {
             },
             onBlueSide));
 
-    driverController.b()
+    driverController.b() // debug for back right module not working
       .debounce(0.01)
       .whileTrue(
         driveSubsystem.runModule(3,() -> 0.2,() -> 0.2)
       )
       .onFalse(driveSubsystem.stop());
 
-    driverController.x()
+    driverController.x() // debug for back right module not working
       .debounce(0.01)
       .whileTrue(
         driveSubsystem.runModule(3,() -> -0.2,() -> -0.2)
@@ -108,7 +108,7 @@ public class RobotContainer {
       .onFalse(driveSubsystem.stop());
 
     
-    driverController.y()
+    driverController.y() // automatically moves to the closest reef scoring pose
         .debounce(0.01)
         .whileTrue(
           driveSubsystem.moveToPose(
