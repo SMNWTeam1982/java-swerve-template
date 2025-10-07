@@ -14,9 +14,7 @@ import edu.wpi.first.math.util.Units;
 
 public class Wrist extends SubsystemBase{
     private final SparkMax pivotMotor; // Changes the angle of the wrist 
-    private final SparkMax intakeMotor; 
     private final RelativeEncoder pivotMotorEncoder; // Encoder for pivotMotor
-    private final RelativeEncoder intakeMotorEncoder;
 
     public final SparkBaseConfig PIVOT_MOTOR_CONFIG = 
     new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
@@ -26,25 +24,13 @@ public class Wrist extends SubsystemBase{
         pivotMotor.configure(PIVOT_MOTOR_CONFIG, 
         SparkBase.ResetMode.kResetSafeParameters, 
         SparkBase.PersistMode.kPersistParameters);
-        
-        intakeMotor = new SparkMax(15, SparkMax.MotorType.kBrushless); // initilizes intake motor 
-        intakeMotor.configure(PIVOT_MOTOR_CONFIG, 
-        SparkBase.ResetMode.kResetSafeParameters, 
-        SparkBase.PersistMode.kPersistParameters);
-
         pivotMotorEncoder = pivotMotor.getEncoder();
         pivotMotorEncoder.setPosition(0);
-        intakeMotorEncoder = intakeMotor.getEncoder();
-        intakeMotorEncoder.setPosition(0);
     }    
 
     public static class WristMotorConstants{
       public static final double REEF_ACTIVE_TIME = 0.5;
       public static final double STATION_ACTIVE_TIME = 8.0;
-
-      public static final double CORAL_INTAKE_SPEED = 0.6;
-      public static final double CORAL_EJECT_SPEED = -0.4;
-      public static final double ALGAE_INTAKE_MAX_SPEED = 0.5;
       
       public static final Rotation2d LEVEL_1_CORAL_WRIST_POSITION = Rotation2d.fromDegrees(0);
       public static final Rotation2d LEVEL_MID_CORAL_WRIST_POSITION = Rotation2d.fromDegrees(-15);
@@ -97,19 +83,24 @@ public class Wrist extends SubsystemBase{
        public static final double CORAL_WRIST_MAX_VELOCITY_RADIANS_PER_SECOND = Math.PI / 4;
        public static final double CORAL_WRIST_MAX_ACCELERATION_RADIANS_PER_SECOND_SQUARED = Math.PI;
     }
-    public Command runMotors() {
+    public Command turnWristUp() {
         return runOnce(
         () -> {
           pivotMotor.set(1);
-          intakeMotor.set(1);
         });
     }
+    
+    public Command turnWristDown(){
+      return runOnce(
+      () -> {
+        pivotMotor.set(-1);
+      });
+  }
 
-    public Command stopMotors(){
+    public Command stopWrist(){
         return runOnce(
         () -> {
           pivotMotor.set(0);
-          intakeMotor.set(0);
         });
     }
 }
