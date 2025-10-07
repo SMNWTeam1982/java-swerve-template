@@ -10,7 +10,9 @@ public class ClimberSubsystem extends SubsystemBase{
     ClimberSubsystem() {
         climberMotor = new SparkMax(17, MotorType.kBrushless);
     }
-    
+    /**
+     * moves the climber away from the robot and ready to be used to hold on to the cage
+     */
     public Command moveClimberOut() {
         return runEnd(
             () -> {
@@ -21,7 +23,10 @@ public class ClimberSubsystem extends SubsystemBase{
             }
         );
     }
-
+    /**
+     * moves the cliber arm in, twords the robot so it can hold on to the cage
+     * or so it can be out of the way
+    */
     public Command moveClimberIn() {
         return runEnd(
             () -> {

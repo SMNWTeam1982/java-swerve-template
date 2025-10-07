@@ -356,6 +356,35 @@ public class DriveSubsystem extends SubsystemBase {
             Math.PI / 2.0));
   }
 
+  /** 
+   * a command for debugging a specific module, note that because this command affects only one module, you can only debug one module at a time
+   * @param moduleIndex 0 = fl, 1 = fr, 2 = bl, 3 = br
+   * @param driveAmount 0.0-1.0 scale for setting the motor
+   * @param turnAmount 0.0-1.0 scale for setting the motor
+  */
+  public Command runModule(
+    int moduleIndex,
+    DoubleSupplier driveAmount,
+    DoubleSupplier turnAmount
+  ){
+    return run(
+      () -> {
+        if (moduleIndex == 0){
+          frontLeft.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+        if (moduleIndex == 1){
+          frontRight.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+        if (moduleIndex == 2){
+          backLeft.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+        if (moduleIndex == 3){
+          backRight.runMotors(driveAmount.getAsDouble(), turnAmount.getAsDouble());
+        }
+      }
+    );
+  }
+
   /**
    * calculates the needed module states and normalizes the wheel velocities
    *
@@ -363,6 +392,7 @@ public class DriveSubsystem extends SubsystemBase {
    * modules
    */
   private void setModulesFromRobotRelativeSpeeds(ChassisSpeeds speeds) {
+    Logger.recordOutput("final robot relative speeds", speeds);
     ChassisSpeeds.discretize(speeds, DriveConstants.DRIVE_PERIOD);
     SwerveModuleState[] moduleStates = DriveConstants.swerveKinematics.toSwerveModuleStates(speeds);
     SwerveDriveKinematics.desaturateWheelSpeeds(moduleStates, DriveConstants.ARTIFICIAL_MAX_MPS);
@@ -393,6 +423,13 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public Pose2d getEstimatedPose() {
     return swervePoseEstimator.getEstimatedPosition();
+  }
+
+  /**gets the last desired state that the module got */
+  private SwerveModuleState[] getModuleLastDesiredStates(){
+    return new SwerveModuleState[] {
+      frontLeft.getLastDesiredState(), frontRight.getLastDesiredState(), backLeft.getLastDesiredState(), backRight.getLastDesiredState()
+    };
   }
 
   /**
@@ -430,7 +467,7 @@ public class DriveSubsystem extends SubsystemBase {
   /**
    * @return robot relative linear velocity in meters per second
    */
-  private double getLinearVelocity() {
+  public double getLinearVelocity() {
     ChassisSpeeds relativeSpeeds = getRobotRelativeSpeeds();
     return Math.hypot(relativeSpeeds.vxMetersPerSecond, relativeSpeeds.vyMetersPerSecond);
   }

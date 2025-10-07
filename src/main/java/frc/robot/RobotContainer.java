@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
 import frc.robot.subsystems.swerve.DriveSubsystem;
+import frc.robot.subsystems.swerve.ReefNavigation;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -88,19 +89,35 @@ public class RobotContainer {
               return new ChassisSpeeds(
                   deadZone(driverController.getLeftX()) * 2,
                   deadZone(driverController.getLeftY()) * 2,
-                  deadZone(driverController.getRightX()) * Math.PI);
+                  deadZone(driverController.getRightX()) * Math.PI); // -PI - PI radians per second (-180 - 180 degrees/sec)
             },
             onBlueSide));
 
-    // a dummy command for snapping to a pose
-    driverController
-        .y()
+    driverController.b() // debug for back right module not working
+      .debounce(0.01)
+      .whileTrue(
+        driveSubsystem.runModule(3,() -> 0.2,() -> 0.2)
+      )
+      .onFalse(driveSubsystem.stop());
+
+    driverController.x() // debug for back right module not working
+      .debounce(0.01)
+      .whileTrue(
+        driveSubsystem.runModule(3,() -> -0.2,() -> -0.2)
+      )
+      .onFalse(driveSubsystem.stop());
+
+    
+    driverController.y() // automatically moves to the closest reef scoring pose
         .debounce(0.01)
-        .whileTrue(driveSubsystem.moveToPose(new Pose2d(5, 5, new Rotation2d())));
+        .whileTrue(
+          driveSubsystem.moveToPose(
+            ReefNavigation.getClosestScoringPose(driveSubsystem.getEstimatedPose())
+          )
+        );
 
     // resets heading when button is released
-    driverController
-        .a()
+    driverController.a()
         .debounce(0.01)
         .onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
   }
