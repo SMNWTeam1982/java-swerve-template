@@ -8,10 +8,12 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class ReefNavigation {
     /** the poses the robot needs to be at in order to score on the reef */
-    public static final Pose2d[] REEF_SCORING_POSITIONS = new Pose2d[] {
+    public static final Pose2d[] REEF_SCORING_POSES = new Pose2d[] {
         getLeftBranchScoringPose(17),
         getRightBranchScoringPose(17),
 
@@ -65,6 +67,12 @@ public final class ReefNavigation {
         Units.inchesToMeters(-12)
     );
 
+    public static void displayScoringPoses(){
+        Field2d field = new Field2d();
+        field.getObject("scoring poses").setPoses(Arrays.asList(REEF_SCORING_POSES));
+        SmartDashboard.putData(field);
+    }
+
     /** gets the field pose of the tag */
     public static Pose2d getTagPose(int tagID){
         return AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark).getTagPose(tagID).get().toPose2d();
@@ -101,6 +109,6 @@ public final class ReefNavigation {
     }
 
     public static Pose2d getClosestScoringPose(Pose2d robotPose){
-        return robotPose.nearest(Arrays.asList(REEF_SCORING_POSITIONS));
+        return robotPose.nearest(Arrays.asList(REEF_SCORING_POSES));
     }
 }

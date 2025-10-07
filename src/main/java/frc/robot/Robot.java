@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.swerve.ReefNavigation;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
@@ -31,6 +32,8 @@ public class Robot extends LoggedRobot {
    * initialization code.
    */
   public Robot() {
+    ReefNavigation.displayScoringPoses();
+
     Logger.recordMetadata("ProjectName", OperatorConstants.PROJECT_NAME); // Set a metadata value
     Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
 
