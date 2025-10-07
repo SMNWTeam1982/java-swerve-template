@@ -116,4 +116,14 @@ public final class ReefNavigation {
     public static Pose2d getClosestScoringPose(Pose2d robotPose){
         return robotPose.nearest(Arrays.asList(REEF_SCORING_POSES));
     }
+
+    /** the first half of the REEF_SCORING_POSES are the blue poses */
+    public static Pose2d getClosestBlueScoringPose(Pose2d robotPose){
+        return robotPose.nearest(Arrays.asList(Arrays.copyOfRange(REEF_SCORING_POSES,0,11)));
+    }
+
+    /** the second half of the REEF_SCORING_POSES are the red poses */
+    public static Pose2d getClosestRedScoringPose(Pose2d robotPose){
+        return robotPose.nearest(Arrays.asList(Arrays.copyOfRange(REEF_SCORING_POSES,12,23)));
+    }
 }
