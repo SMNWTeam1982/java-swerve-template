@@ -89,13 +89,26 @@ public class RobotContainer {
               return new ChassisSpeeds(
                   deadZone(driverController.getLeftX()) * 2,
                   deadZone(driverController.getLeftY()) * 2,
-                  deadZone(driverController.getRightX()) * Math.PI);
+                  deadZone(driverController.getRightX()) * Math.PI); // -PI - PI radians per second (-180 - 180 degrees/sec)
             },
             onBlueSide));
 
+    driverController.b()
+      .debounce(0.01)
+      .whileTrue(
+        driveSubsystem.runModule(3,() -> 0.2,() -> 0.2)
+      )
+      .onFalse(driveSubsystem.stop());
+
+    driverController.x()
+      .debounce(0.01)
+      .whileTrue(
+        driveSubsystem.runModule(3,() -> -0.2,() -> -0.2)
+      )
+      .onFalse(driveSubsystem.stop());
+
     
-    driverController
-        .y()
+    driverController.y()
         .debounce(0.01)
         .whileTrue(
           driveSubsystem.moveToPose(
@@ -104,8 +117,7 @@ public class RobotContainer {
         );
 
     // resets heading when button is released
-    driverController
-        .a()
+    driverController.a()
         .debounce(0.01)
         .onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
   }
