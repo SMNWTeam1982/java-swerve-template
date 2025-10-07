@@ -55,7 +55,7 @@ public final class ReefNavigation {
 
     /** these vectors are translations from a tag with an angle of 0 (such as tag 21),
      * they are shifted out by 20 inches (to account for the robot width), down 5.5 (for the intake offset), then up or down 6.5 for the left or right branch
-     * <p> to use these rotate them to the angle of the tag then add them to its position to get the translation of the scoring pose
+     * <p> to use these, rotate them to the angle of the tag then add them to its position to get the translation of the scoring pose
      */
 
     public static final Translation2d RIGHT_SCORING_VECTOR = new Translation2d(
@@ -67,6 +67,7 @@ public final class ReefNavigation {
         Units.inchesToMeters(-12)
     );
 
+    /** puts a Field2d object onto the SmartDashboard that contains the REEF_SCORING_POSES */
     public static void displayScoringPoses(){
         Field2d field = new Field2d();
         field.getObject("scoring poses").setPoses(Arrays.asList(REEF_SCORING_POSES));
@@ -108,6 +109,10 @@ public final class ReefNavigation {
         return leftBranchTarget;
     }
 
+    /**
+     * @param robotPose the current pose of the robot on the field
+     * @return the closest branch scoring pose to the given robot pose
+     */
     public static Pose2d getClosestScoringPose(Pose2d robotPose){
         return robotPose.nearest(Arrays.asList(REEF_SCORING_POSES));
     }
