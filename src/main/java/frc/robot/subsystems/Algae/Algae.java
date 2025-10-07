@@ -74,7 +74,22 @@ public final SparkBaseConfig LEFT_MOTOR_CONFIG =
     public static final double ALGAE_IN_CURRENT_THRESHOLD = 25;
  }
 
+ public Command runMotors() {
+    return runOnce(
+    () -> {
+      leftMotor.set(1);
+      rightMotor.set(1);
+    });
+}
 
+public Command stopMotors(){
+    return runOnce(
+    () -> {
+      leftMotor.set(0);
+      rightMotor.set(0);
+    });
+}
+}
 
 
 
