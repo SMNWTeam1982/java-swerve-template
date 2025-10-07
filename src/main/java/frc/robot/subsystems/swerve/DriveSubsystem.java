@@ -356,12 +356,13 @@ public class DriveSubsystem extends SubsystemBase {
             Math.PI / 2.0));
   }
 
-  /** a command for debugging a specific module 
+  /** 
+   * a command for debugging a specific module, note that because this command affects only one module, you can only debug one module at a time
    * @param moduleIndex 0 = fl, 1 = fr, 2 = bl, 3 = br
    * @param driveAmount 0.0-1.0 scale for setting the motor
    * @param turnAmount 0.0-1.0 scale for setting the motor
   */
-  public Command debugModule(
+  public Command runModule(
     int moduleIndex,
     DoubleSupplier driveAmount,
     DoubleSupplier turnAmount
@@ -422,6 +423,13 @@ public class DriveSubsystem extends SubsystemBase {
    */
   public Pose2d getEstimatedPose() {
     return swervePoseEstimator.getEstimatedPosition();
+  }
+
+  /**gets the last desired state that the module got */
+  private SwerveModuleState[] getModuleLastDesiredStates(){
+    return new SwerveModuleState[] {
+      frontLeft.getLastDesiredState(), frontRight.getLastDesiredState(), backLeft.getLastDesiredState(), backRight.getLastDesiredState()
+    };
   }
 
   /**

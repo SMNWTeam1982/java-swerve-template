@@ -61,6 +61,8 @@ public class SwerveModule {
   /** see the wpilib docs on Feedforward */
   private final SimpleMotorFeedforward driveFeedforward;
 
+  private SwerveModuleState lastDesiredState;
+
   /** Constructs an instance of a SwerveModule with a drive motor, turn motor, and turn encoder. */
   public SwerveModule(int driveMotorCANID, int turnMotorCANID, int encoderCANID) {
     driveMotor = new SparkMax(driveMotorCANID, MotorType.kBrushless);
@@ -97,6 +99,8 @@ public class SwerveModule {
    * <p>this has to be called every frame in order to update work
    */
   public void setDesiredState(SwerveModuleState desiredState) {
+
+    lastDesiredState = desiredState;
 
     Rotation2d encoderRotation =
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
@@ -157,6 +161,14 @@ public class SwerveModule {
    */
   public void updateTurnPID(double p, double i, double d) {
     turnPIDController.setPID(p, i, d);
+  }
+
+  /**
+   * 
+   * @return the last input to setDesiredState()
+   */
+  public SwerveModuleState getLastDesiredState(){
+    return lastDesiredState;
   }
 
   /**
