@@ -28,10 +28,37 @@ public class Algae extends SubsystemBase{
 private SparkMax leftMotor;
 private SparkMax rightMotor; 
 private RelativeEncoder leftMotorEncoder;
-private RelativeEncoder rightMootorEncoder;  
+private RelativeEncoder rightMotorEncoder;  
 
 
 
 
 
 }
+
+
+public final SparkBaseConfig LEFT_MOTOR_CONFIG = 
+    new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
+    
+
+
+
+
+
+ public Algae() {
+    leftMotor = new SparkMax(13, SparkMax.MotorType.kBrushless); // initilizes pivot otor 
+    leftMotor.configure(LEFT_MOTOR_CONFIG, 
+        SparkBase.ResetMode.kResetSafeParameters, 
+        SparkBase.PersistMode.kPersistParameters);
+        
+        rightMotor = new SparkMax(14, SparkMax.MotorType.kBrushless); // initilizes intake motor 
+        rightMotor.configure(RIGHT_MOTOR_CONFIG, 
+        SparkBase.ResetMode.kResetSafeParameters, 
+        SparkBase.PersistMode.kPersistParameters);
+
+        leftMotorEncoder = leftMotor.getEncoder();
+        leftMotorEncoder.setPosition(0);
+        rightMotorEncoder = rightMotor.getEncoder();
+        rightMotorEncoder.setPosition(0)
+        
+ };  
