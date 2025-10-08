@@ -1,24 +1,8 @@
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.util.sendable.Sendable;
-import edu.wpi.first.util.sendable.SendableBuilder;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+package frc.robot.subsystems.Algae;
+
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.subsystems.vision.PhotonVisionSubsystem;
-import frc.robot.subsystems.vision.QuestNavSubsystem;
-import org.littletonrobotics.junction.Logger;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkMax;
@@ -27,10 +11,10 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 public class Algae extends SubsystemBase{ 
 
-private SparkMax leftMotor;
-private SparkMax rightMotor; 
-private RelativeEncoder leftMotorEncoder;
-private RelativeEncoder rightMotorEncoder;  
+private final SparkMax leftMotor;
+private final SparkMax rightMotor; 
+private final RelativeEncoder leftMotorEncoder;
+private final RelativeEncoder rightMotorEncoder;  
 
 
 
@@ -39,9 +23,9 @@ private RelativeEncoder rightMotorEncoder;
 
 
 
-public final SparkBaseConfig LEFT_MOTOR_CONFIG = 
+public static final SparkBaseConfig LEFT_MOTOR_CONFIG = 
  new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-  public final SparkBaseConfig RIGHT_MOTOR_CONGFIG =  
+  public static final SparkBaseConfig RIGHT_MOTOR_CONGFIG =  
  new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
  
 
@@ -120,4 +104,3 @@ public Command stopMotors(){
 
 
 
-}
