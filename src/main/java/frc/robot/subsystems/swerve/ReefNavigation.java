@@ -12,7 +12,24 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public final class ReefNavigation {
-    /** the poses the robot needs to be at in order to score on the reef */
+
+    /** these vectors are translations from a tag with an angle of 0 (such as tag 21),
+     * they are shifted out by 20 inches (to account for the robot width), down 5.5 (for the intake offset), then up or down 6.5 for the left or right branch
+     * <p> to use these, rotate them to the angle of the tag then add them to its position to get the translation of the scoring pose
+     */
+
+    public static final Translation2d RIGHT_SCORING_VECTOR = new Translation2d(
+        Units.inchesToMeters(20),
+        Units.inchesToMeters(1)
+    );
+    public static final Translation2d LEFT_SCORING_VECTOR = new Translation2d(
+        Units.inchesToMeters(20),
+        Units.inchesToMeters(-12)
+    );
+
+    /** the poses the robot needs to be at in order to score on the reef 
+     * <p> this constant needs to be initialized after the scoring vectors
+    */
     public static final Pose2d[] REEF_SCORING_POSES = new Pose2d[] {
         getLeftBranchScoringPose(17),
         getRightBranchScoringPose(17),
@@ -52,20 +69,6 @@ public final class ReefNavigation {
         getLeftBranchScoringPose(11),
         getRightBranchScoringPose(11),
     };
-
-    /** these vectors are translations from a tag with an angle of 0 (such as tag 21),
-     * they are shifted out by 20 inches (to account for the robot width), down 5.5 (for the intake offset), then up or down 6.5 for the left or right branch
-     * <p> to use these, rotate them to the angle of the tag then add them to its position to get the translation of the scoring pose
-     */
-
-    public static final Translation2d RIGHT_SCORING_VECTOR = new Translation2d(
-        Units.inchesToMeters(20),
-        Units.inchesToMeters(1)
-    );
-    public static final Translation2d LEFT_SCORING_VECTOR = new Translation2d(
-        Units.inchesToMeters(20),
-        Units.inchesToMeters(-12)
-    );
 
     /** puts a Field2d object onto the SmartDashboard that contains the REEF_SCORING_POSES */
     public static void displayScoringPoses(){
