@@ -7,7 +7,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ClimberSubsystem extends SubsystemBase{
     private final SparkMax climberMotor;
-    ClimberSubsystem() {
+    public ClimberSubsystem() {
         climberMotor = new SparkMax(17, MotorType.kBrushless);
     }
     /**
