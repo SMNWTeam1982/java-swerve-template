@@ -93,22 +93,8 @@ public class RobotContainer {
             },
             onBlueSide));
 
-    driverController.b() // debug for back right module not working
-      .debounce(0.01)
-      .whileTrue(
-        driveSubsystem.runModule(3,() -> 0.2,() -> 0.2)
-      )
-      .onFalse(driveSubsystem.stop());
-
-    driverController.x() // debug for back right module not working
-      .debounce(0.01)
-      .whileTrue(
-        driveSubsystem.runModule(3,() -> -0.2,() -> -0.2)
-      )
-      .onFalse(driveSubsystem.stop());
-
     
-    driverController.y() // automatically moves to the closest reef scoring pose
+    driverController.a() // automatically moves to the closest reef scoring pose
         .debounce(0.01)
         .whileTrue(
           driveSubsystem.moveToPose(
@@ -117,7 +103,7 @@ public class RobotContainer {
         );
 
     // resets heading when button is released
-    driverController.a()
+    driverController.y()
         .debounce(0.01)
         .onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
   }
