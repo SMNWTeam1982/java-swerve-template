@@ -1,5 +1,4 @@
 package frc.robot.subsystems.Wrist;
-
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkMax;
@@ -11,7 +10,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Intake extends SubsystemBase{
     private final SparkMax intakeMotor;
-    private final RelativeEncoder intakeMotorEncoder;
+    private final RelativeEncoder intakeMotorEncoder; 
     
     public final SparkBaseConfig INTAKE_MOTOR_CONFIG = 
         new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
@@ -26,32 +25,28 @@ public class Intake extends SubsystemBase{
         intakeMotorEncoder.setPosition(0);
     }
 
+    /** ^ Initilizes the intake motor ^ */
+
     public static class intakeConstants{
-        public static final double CORAL_INTAKE_SPEED = 0.6;
+       public static final double CORAL_INTAKE_SPEED = 0.6;
        public static final double CORAL_EJECT_SPEED = -0.4;
        public static final double ALGAE_INTAKE_MAX_SPEED = 0.5;
     }
-    /**
-     * moves the climber away from the robot and ready to be used to hold on to the cage
-     */
-    public Command IntakeCoral() {
+
+    public Command IntakeCoral() {  // Intakes Coral 
         return runOnce(
         () -> {
           intakeMotor.set(1);
         });
     }
-    /**
-     * moves the cliber arm in, twords the robot so it can hold on to the cage
-     * or so it can be out of the way
-    */
-    public Command ExpelCoral() {
+    public Command ExpelCoral() { // Expels Coral 
         return runOnce(
         () -> {
           intakeMotor.set(-1);
         });
     }
 
-    public Command StopMotor() {
+    public Command StopMotor() { // Stops Intake motor  
         return runOnce(
         () -> {
           intakeMotor.set(0);
