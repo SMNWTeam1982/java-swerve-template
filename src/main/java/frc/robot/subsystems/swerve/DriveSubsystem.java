@@ -359,8 +359,8 @@ public class DriveSubsystem extends SubsystemBase {
   /** 
    * a command for debugging a specific module, note that because this command affects only one module, you can only debug one module at a time
    * @param moduleIndex 0 = fl, 1 = fr, 2 = bl, 3 = br
-   * @param driveAmount 0.0-1.0 scale for setting the motor
-   * @param turnAmount 0.0-1.0 scale for setting the motor
+   * @param driveAmount -1.0 - +1.0 scale for setting the motor
+   * @param turnAmount -1.0 - +1.0 scale for setting the motor
   */
   public Command runModule(
     int moduleIndex,
