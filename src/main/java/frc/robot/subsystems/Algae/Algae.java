@@ -14,14 +14,7 @@ public class Algae extends SubsystemBase{
 private final SparkMax leftMotor;
 private final SparkMax rightMotor; 
 private final RelativeEncoder leftMotorEncoder;
-private final RelativeEncoder rightMotorEncoder;  
-
-
-
-
-
-
-
+private final RelativeEncoder rightMotorEncoder;   
 
 public static final SparkBaseConfig LEFT_MOTOR_CONFIG = 
  new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
