@@ -11,8 +11,9 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
-public class Elevator extends SubsystemBase{
+public class ElevatorSubsystem extends SubsystemBase{
     public static class ElevatorConstants {
         public final static double LEVEL_1_TARGET_HEIGHT = 0.61;
         public final static double LEVEL_2_TARGET_HEIGHT = 0.9; //#1.05 # change
@@ -38,79 +39,105 @@ public class Elevator extends SubsystemBase{
         // The current limit is temporary
         public final static  SparkBaseConfig LEAD_MOTOR_CONFIG =
             new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-        public final static SparkBaseConfig FOLLOWING_MOTOR_CONFIG =
-            (new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast)).inverted(true);
         public final static double MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER = 1.24744 / 110.5728;
 
 
     }
 
     private final SparkMax leadMotor;
+    /** this motor will be configured to follow the commands of the lead motor so we dont have to set it */
     private final SparkMax followingMotor;
     private final RelativeEncoder leadEncoder;
-    private final RelativeEncoder followingEncoder;
-    private final PIDController altitudePidController;
+    private final PIDController altitudePidController = new PIDController(
+        ElevatorConstants.ALTITUDE_PROPORTIONAL_GAIN,
+        ElevatorConstants.ALTITUDE_INTERGRAL_GAIN,
+        ElevatorConstants.ALTITUDE_DERIVATIVE_GAIN
+    );
 
-        public Elevator() {
+    public final Trigger atTargetHeight = new Trigger(() -> altitudePidController.atSetpoint());
+
+    public ElevatorSubsystem() {
         leadMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
         followingMotor = new SparkMax(12, SparkMax.MotorType.kBrushless);
-        followingMotor.configure(
-            ElevatorConstants.FOLLOWING_MOTOR_CONFIG,
-            SparkBase.ResetMode.kResetSafeParameters,
-            SparkBase.PersistMode.kPersistParameters
-        );
-        // inverted following motor in the config in the FOLLOWING_MOTOR_CONFIG init.
-        ElevatorConstants.LEAD_MOTOR_CONFIG.follow(followingMotor);
         leadMotor.configure(
             ElevatorConstants.LEAD_MOTOR_CONFIG,
             SparkBase.ResetMode.kResetSafeParameters,
             SparkBase.PersistMode.kPersistParameters
         );
+
+        followingMotor.configure(
+            ElevatorConstants.LEAD_MOTOR_CONFIG.follow(11,true),
+            SparkBase.ResetMode.kResetSafeParameters,
+            SparkBase.PersistMode.kPersistParameters
+        );
+        
         leadEncoder = leadMotor.getEncoder();
-        followingEncoder = followingMotor.getEncoder();
+
         zeroEncoders();
-
-        altitudePidController = new PIDController(ElevatorConstants.ALTITUDE_PROPORTIONAL_GAIN, ElevatorConstants.ALTITUDE_INTERGRAL_GAIN, ElevatorConstants.ALTITUDE_DERIVATIVE_GAIN);
+        
         altitudePidController.setTolerance(0.01);
+        altitudePidController.setSetpoint(ElevatorConstants.IDLE_TARGET_HEIGHT); // very important this is set before running the pid loop
 
-
-
+        setDefaultCommand(runPID()); // will run the pid loop by default
     }
 
     public Command zeroEncoders() {
         return runOnce(() -> {
             leadEncoder.setPosition(0);
-            followingEncoder.setPosition(0);
         });
     }
 
     public double getElevatorHeight() {
-        double position = leadEncoder.getPosition();
-        return position * ElevatorConstants.MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER;
+        return leadEncoder.getPosition() * ElevatorConstants.MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER;
     }
 
-    public Command moveToHeight() {
-        return run(() -> {
-            double currentHeight = getElevatorHeight();
-            double pidOutput = altitudePidController.calculate(currentHeight);
-            // Clamp the output to be between -1 and 1
-            pidOutput = Math.max(-1, Math.min(1, pidOutput));
-            leadMotor.set(pidOutput);
-        });
+    /** moves the elevator towards the target height, 
+     * <p> runs forever, if interupted it WILL stop the motors
+     */
+    public Command runPID() {
+        return runEnd(
+            () -> {
+                double currentHeight = getElevatorHeight();
+                double pidOutput = altitudePidController.calculate(currentHeight);
+                // Clamp the output to be between -1 and 1
+                pidOutput = Math.max(-1, Math.min(1, pidOutput));
+                leadMotor.set(pidOutput);
+            },
+            () -> leadMotor.set(0)
+        );
     }
 
-    public Command elevatorSetState(double target) {
-        return runOnce(() -> {
-            altitudePidController.setSetpoint(target);
+    public Command setTargetHeight(double targetHeight) {
+        return runOnce(
+            () -> {
+                altitudePidController.setSetpoint(targetHeight);
+            }
+        );
+    }
 
-        });
+    /** a command that will run until it reaches the target height
+     * <p> unlike the runPID command, this command ends when it reaches within the tolerance of the target height
+     * <p> this command also stops the elevator motors when it ends or is interupted
+     */
+    public Command moveToTargetHeight(double targetHeight){
+        return setTargetHeight(targetHeight)
+            .andThen(runPID().until(atTargetHeight))
+            .finallyDo(() -> leadMotor.set(0));
+    }
+
+    /** sets the target height to the idle height */
+    public Command setIdle(){
+        return setTargetHeight(
+            ElevatorConstants.IDLE_TARGET_HEIGHT
+        );
     }
 
     public Command stopMotors() {
-        return runOnce(() -> {
-            leadMotor.set(0);
-            followingMotor.set(0);
-        });
+        return runOnce(
+            () -> {
+                leadMotor.set(0);
+            }
+        );
     }
 
     @Override

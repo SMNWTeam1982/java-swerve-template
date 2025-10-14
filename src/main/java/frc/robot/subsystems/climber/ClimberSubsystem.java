@@ -18,7 +18,7 @@ public class ClimberSubsystem extends SubsystemBase{
      * moves the climber away from the robot and ready to be used to hold on to the cage
      */
     public Command moveClimberOut() {
-        return runEnd(
+        return startEnd(
             () -> {
                 climberMotor.set(ClimberConstants.EXTEND_SPEED);
             },
@@ -32,7 +32,7 @@ public class ClimberSubsystem extends SubsystemBase{
      * or so it can be out of the way
      */
     public Command moveClimberIn() {
-        return runEnd(
+        return startEnd(
             () -> {
                 climberMotor.set(ClimberConstants.RETRACT_SPEED);
             },

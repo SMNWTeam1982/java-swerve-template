@@ -105,7 +105,7 @@ public class SwerveModule {
     Rotation2d encoderRotation =
         Rotation2d.fromRotations(turnEncoder.getPosition().getValueAsDouble());
 
-    desiredState.optimize(getState().angle);
+    desiredState.optimize(encoderRotation);
 
     desiredState.cosineScale(encoderRotation);
 

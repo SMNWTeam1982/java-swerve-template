@@ -9,35 +9,45 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-public class Algae extends SubsystemBase{ 
+public class AlgaeSubsystem extends SubsystemBase{ 
 
 private final SparkMax leftMotor;
 private final SparkMax rightMotor; 
 private final RelativeEncoder leftMotorEncoder;
-private final RelativeEncoder rightMotorEncoder;   
+private final RelativeEncoder rightMotorEncoder;  
+
+
+
+
+
+
+
 
 public static final SparkBaseConfig LEFT_MOTOR_CONFIG = 
- new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
-  public static final SparkBaseConfig RIGHT_MOTOR_CONGFIG =  
- new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
+  new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
+  
+public static final SparkBaseConfig RIGHT_MOTOR_CONGFIG =  
+  new SparkMaxConfig().smartCurrentLimit(35).idleMode(SparkBaseConfig.IdleMode.kCoast);
  
 
 
 
 
- public Algae() {
+ public AlgaeSubsystem() {
     leftMotor = new SparkMax(13, SparkMax.MotorType.kBrushless); // initilizes pivot otor 
     leftMotor.configure(LEFT_MOTOR_CONFIG, 
         SparkBase.ResetMode.kResetSafeParameters, 
         SparkBase.PersistMode.kPersistParameters);
         
     rightMotor = new SparkMax(14, SparkMax.MotorType.kBrushless); // initilizes intake motor 
+       
         rightMotor.configure(RIGHT_MOTOR_CONGFIG, 
         SparkBase.ResetMode.kResetSafeParameters, 
         SparkBase.PersistMode.kPersistParameters);
 
         leftMotorEncoder = leftMotor.getEncoder();
         leftMotorEncoder.setPosition(0);
+
         rightMotorEncoder = rightMotor.getEncoder();
         rightMotorEncoder.setPosition(0);
         
@@ -51,12 +61,19 @@ public static final SparkBaseConfig LEFT_MOTOR_CONFIG =
     public static final double ALGAE_IN_CURRENT_THRESHOLD = 25;
  }
 
- public Command runMotors() {
+ public Command runintakeMotors() {
     return runOnce(
     () -> {
-      leftMotor.set(1);
-      rightMotor.set(1);
+      leftMotor.set(0.2);
+      rightMotor.set(-0.2);
     });
+}
+public Command runejectMotors() {
+  return runOnce(
+  () -> {
+    leftMotor.set(-0.2);
+    rightMotor.set(0.2);
+  });
 }
 
 public Command stopMotors(){
@@ -66,9 +83,9 @@ public Command stopMotors(){
       rightMotor.set(0);
     });
 }
+
+
 }
-
-
 
 
 
