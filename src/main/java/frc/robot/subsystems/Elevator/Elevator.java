@@ -45,7 +45,6 @@ public class Elevator extends SubsystemBase{
 
     }
 
-
     private final SparkMax leadMotor;
     private final SparkMax followingMotor;
     private final RelativeEncoder leadEncoder;
