@@ -1,7 +1,5 @@
 package frc.robot.subsystems.Elevator;
 
-import java.util.function.Supplier;
-
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkMax;
@@ -45,10 +43,12 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
 
-    private final SparkMax leadMotor;
+    private final SparkMax leadMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
+    private final RelativeEncoder leadEncoder = leadMotor.getEncoder();
+
     /** this motor will be configured to follow the commands of the lead motor so we dont have to set it */
-    private final SparkMax followingMotor;
-    private final RelativeEncoder leadEncoder;
+    private final SparkMax followingMotor = new SparkMax(12, SparkMax.MotorType.kBrushless);
+
     private final PIDController altitudePidController = new PIDController(
         ElevatorConstants.ALTITUDE_PROPORTIONAL_GAIN,
         ElevatorConstants.ALTITUDE_INTERGRAL_GAIN,
@@ -58,8 +58,6 @@ public class ElevatorSubsystem extends SubsystemBase{
     public final Trigger atTargetHeight = new Trigger(() -> altitudePidController.atSetpoint());
 
     public ElevatorSubsystem() {
-        leadMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
-        followingMotor = new SparkMax(12, SparkMax.MotorType.kBrushless);
         leadMotor.configure(
             ElevatorConstants.LEAD_MOTOR_CONFIG,
             SparkBase.ResetMode.kResetSafeParameters,
@@ -67,14 +65,12 @@ public class ElevatorSubsystem extends SubsystemBase{
         );
 
         followingMotor.configure(
-            ElevatorConstants.LEAD_MOTOR_CONFIG.follow(11,true),
+            ElevatorConstants.LEAD_MOTOR_CONFIG.follow(11,true), // set the motor to follow the leader and invert its input
             SparkBase.ResetMode.kResetSafeParameters,
             SparkBase.PersistMode.kPersistParameters
         );
-        
-        leadEncoder = leadMotor.getEncoder();
 
-        zeroEncoders();
+        leadEncoder.setPosition(0);
         
         altitudePidController.setTolerance(0.01);
         altitudePidController.setSetpoint(ElevatorConstants.IDLE_TARGET_HEIGHT); // very important this is set before running the pid loop
