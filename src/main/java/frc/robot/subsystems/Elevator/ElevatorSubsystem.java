@@ -42,7 +42,6 @@ public class ElevatorSubsystem extends SubsystemBase{
 
     }
 
-
     private final SparkMax leadMotor = new SparkMax(11, SparkMax.MotorType.kBrushless);
     private final RelativeEncoder leadEncoder = leadMotor.getEncoder();
 
