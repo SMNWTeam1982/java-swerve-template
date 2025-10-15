@@ -1,22 +1,31 @@
 name: CI
 on:
-  push: null
-  pull_request: null
+  push:
+    paths: - *.java
+  pull_request:
+    paths: - *.java
 
 jobs:
   # Format code with Spotless & suggested WPI formatting
   # https://docs.wpilib.org/en/stable/docs/software/advanced-gradlerio/code-formatting.html
   format:
+    permissions:
+      contents: write
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref }}
       - uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: 17
       - run: ./gradlew spotlessApply
+      - uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "Automated code formatting"
+          file_pattern: '*.java'
   # Lint code with Spotless as suggested by WPI
   # See above
   lint:
