@@ -16,6 +16,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 
 
 
@@ -99,6 +100,8 @@ public class WristSubsystem extends SubsystemBase{
         )
     );
 
+    public final Trigger atTargetAngle = new Trigger(() -> wristController.atSetpoint());
+
     
 
     public WristSubsystem() {
@@ -149,49 +152,41 @@ public class WristSubsystem extends SubsystemBase{
         );
     }
 
-    public Command turnWristUp() { // turns Wrist upwards 
+    public Command turnWristUp() { // (debuging command) turns Wrist upwards 
         return runEnd(
         () -> {
-          pivotMotor.set(1);
+          pivotMotor.set(.1);
         }, 
         () -> {
           pivotMotor.set(0.0);
       });
     }
     
-    public Command turnWristDown(){ // turns Wrist downwards 
+    public Command turnWristDown(){ // (debugging command) turns Wrist downwards 
       return runEnd(
       () -> {
-        pivotMotor.set(-1);
+        pivotMotor.set(-.1);
       }, 
       () -> {
         pivotMotor.set(0.0);
     });
   }
 
-
-  
-  public Command runWrist(){
-        public static wristPosition = pivotMotorEncoder.getWristPosition();
-        public static pidAmount = coralWristFeedForeward.calculate(
-          coralWristTarget.getWristPosition().radians(),
-          coralWristTarget.radians()
+  public Command setTargetAngle(Rotation2d targetAngle) { // Finds the target angle for the wrist based on button input 
+        return runOnce(
+            () -> {
+                wristController.setGoal(targetAngle.getRadians());
+            }
         );
+    }
 
-        feedforward = self.coralWristFeedForeward.calculate(
-            wristPosition.radians(),
-            units.rotationsPerMinuteToRadiansPerSecond(pivotMotorEncoder.getVelocity())
-        );
-
-        double output = pidAmount + feedforward;
-        
-        if (output > 12.0){
-            output = 12.0;
-        }
-        if (output < -12.0){
-            output = 12.0;
-        }
-        
-        pivotMotor.setVoltage(output);
-  }
+    /** a command that will run until it reaches the target height
+     * <p> unlike the runPID command, this command ends when it reaches within the tolerance of the target height
+     * <p> this command also stops the elevator motors when it ends or is interupted
+     */
+    public Command moveToTargetAngle(Rotation2d targetAngle){ // Moves the pivot motor to the angle 
+        return setTargetAngle(targetAngle)
+            .andThen(runPID().until(atTargetAngle))
+            .finallyDo(() -> pivotMotor.set(0));
+    }
 }
