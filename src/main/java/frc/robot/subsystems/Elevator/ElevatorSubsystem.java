@@ -84,7 +84,7 @@ public class ElevatorSubsystem extends SubsystemBase{
     }
 
     public double getElevatorHeight() {
-        return leadEncoder.getPosition() * ElevatorConstants.MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER;
+        return leadEncoder.getPosition() * ElevatorConstants.MOTOR_ROTATIONS_TO_ELEVATOR_HEIGHT_METERS_MULTIPLIER + ElevatorConstants.ELEVATOR_HEIGHT_OFFSET;
     }
 
     /** moves the elevator towards the target height, 

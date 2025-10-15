@@ -17,6 +17,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandStadiaController;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.OperatorConstants;
+import frc.robot.subsystems.Elevator.ElevatorSubsystem;
+import frc.robot.subsystems.Elevator.ElevatorSubsystem.ElevatorConstants;
+import frc.robot.subsystems.climber.ClimberSubsystem;
 import frc.robot.subsystems.swerve.DriveSubsystem;
 import frc.robot.subsystems.swerve.ReefNavigation;
 import frc.robot.subsystems.vision.PhotonVisionSubsystem;
@@ -32,17 +35,21 @@ public class RobotContainer {
 
   private final PhotonVisionSubsystem visionSubsystem =
       new PhotonVisionSubsystem(
-          Constants.VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT, "photonCamera");
+          Constants.VisionConstants.PHOTON_CAM_RELATIVE_TO_ROBOT, "limelight-front");
 
   private final DriveSubsystem driveSubsystem =
       new DriveSubsystem(
           () -> visionSubsystem.getLastVisionData(), () -> visionSubsystem.isDataFresh());
 
+  private final ElevatorSubsystem elevatorSubsystem = new ElevatorSubsystem();
+
+  private final ClimberSubsystem climberSubsystem = new ClimberSubsystem();
+
   private final LoggedDashboardChooser<Command> autoChooser;
 
   // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandStadiaController driverController =
-      new CommandStadiaController(OperatorConstants.DRIVER_CONTROLLER_PORT);
+  private final CommandXboxController driverController =
+      new CommandXboxController(OperatorConstants.DRIVER_CONTROLLER_PORT);
   private final CommandJoystick operatorController =
       new CommandJoystick(OperatorConstants.OPERATOR_CONTROLLER_PORT);
 
@@ -87,9 +94,9 @@ public class RobotContainer {
         driveSubsystem.driveFromDriversStation(
             () -> {
               return new ChassisSpeeds(
-                  deadZone(driverController.getLeftX()) * 2,
-                  deadZone(driverController.getLeftY()) * 2,
-                  deadZone(driverController.getRightX()) * Math.PI); // -PI - PI radians per second (-180 - 180 degrees/sec)
+                  deadZone(driverController.getRightX()) * 2 * 0.2,
+                  deadZone(driverController.getRightY()) * 2 * 0.2,
+                  deadZone(driverController.getLeftX()) * Math.PI * 0.2); // -PI - PI radians per second (-180 - 180 degrees/sec)
             },
             onBlueSide));
 
@@ -108,7 +115,12 @@ public class RobotContainer {
         .onFalse(driveSubsystem.zeroEstimatedHeading(visionSubsystem));
   }
 
-  private void configureOperatorBindings() {}
+  private void configureOperatorBindings() {
+
+    //driverController.x().whileTrue(elevatorSubsystem.moveToTargetHeight(ElevatorConstants.LEVEL_2_TARGET_HEIGHT)).onFalse(elevatorSubsystem.setIdle());
+    driverController.x().whileTrue(climberSubsystem.moveClimberOut());
+    driverController.b().whileTrue(climberSubsystem.moveClimberIn());
+  }
 
   private double deadZone(double number) {
     if (Math.abs(number) < 0.05) {
