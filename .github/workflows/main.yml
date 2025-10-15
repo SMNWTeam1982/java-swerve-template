@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    paths: - *.java
+    paths: - '*.java'
   pull_request:
-    paths: - *.java
+    paths: - '*.java'
 
 jobs:
   # Format code with Spotless & suggested WPI formatting
